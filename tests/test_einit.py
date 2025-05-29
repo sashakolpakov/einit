@@ -132,7 +132,7 @@ def test_synthetic_shapes_statistical(noise_std=0.02, overlap_fraction=0.8, n_po
         sphere_transform_errors.append(transform_error)
         sphere_clean_rmses.append(clean_rmse)
         
-        if transform_error < 0.5 and clean_rmse < 0.1:
+        if transform_error < 0.05 and clean_rmse < 0.05:
             sphere_successes += 1
     
     print(f"Sphere success rate: {sphere_successes}/100 = {sphere_successes}%")
@@ -177,7 +177,7 @@ def test_synthetic_shapes_statistical(noise_std=0.02, overlap_fraction=0.8, n_po
         cube_transform_errors.append(transform_error)
         cube_clean_rmses.append(clean_rmse)
         
-        if transform_error < 0.1 and clean_rmse < 0.01:
+        if transform_error < 0.05 and clean_rmse < 0.05:
             cube_successes += 1
     
     print(f"Cube success rate: {cube_successes}/100 = {cube_successes}%")
@@ -231,7 +231,7 @@ def test_bunny_cloud_statistical(noise_std=0.02, overlap_fraction=0.8, n_points=
         clean_rmses.append(clean_rmse)
         
         # Count successes
-        if transform_error < 1.0 and clean_rmse < 0.1:
+        if transform_error < 0.08 and clean_rmse < 0.08:
             successes += 1
     
     # Print statistics

@@ -19,7 +19,7 @@ except ImportError:
 
 @pytest.mark.skipif(not OPENCV_AVAILABLE, reason="OpenCV not available")
 def test_sphere_einit_quality():
-    """Test that einit provides excellent initialization for sphere data."""
+    """Test that einit provides good initialization for sphere data."""
     print(f"\n=== SPHERE EINIT QUALITY TEST ===")
     
     errors = []
@@ -54,12 +54,12 @@ def test_sphere_einit_quality():
     
     # Einit should achieve excellent alignment
     assert mean_error < 0.03, f"Einit RMSE {mean_error:.6f} should be < 0.03"
-    print("✓ Einit provides excellent sphere alignment")
+    print("✓ Einit provides good sphere alignment (RMSE < 0.03)")
 
 
 @pytest.mark.skipif(not OPENCV_AVAILABLE, reason="OpenCV not available") 
 def test_cube_einit_quality():
-    """Test that einit provides excellent initialization for cube data."""
+    """Test that einit provides good initialization for cube data."""
     print(f"\n=== CUBE EINIT QUALITY TEST ===")
     
     errors = []
@@ -94,7 +94,7 @@ def test_cube_einit_quality():
     
     # Einit should achieve excellent alignment for cubes
     assert mean_error < 0.05, f"Einit RMSE {mean_error:.6f} should be < 0.05"
-    print("✓ Einit provides excellent cube alignment")
+    print("✓ Einit provides good cube alignment (RMSE < 0.05)")
 
 
 @pytest.mark.skipif(not OPENCV_AVAILABLE, reason="OpenCV not available")
@@ -131,8 +131,8 @@ def test_bunny_einit_quality():
     print(f"Einit RMSE: {mean_error:.6f} ± {np.std(errors):.6f}")
     
     # Einit should achieve good alignment for complex shapes like bunny
-    assert mean_error < 0.1, f"Einit RMSE {mean_error:.6f} should be < 0.1"
-    print("✓ Einit provides good bunny alignment")
+    assert mean_error < 0.08, f"Einit RMSE {mean_error:.6f} should be < 0.08"
+    print("✓ Einit provides good bunny alignment (RMSE < 0.08)")
 
 
 @pytest.mark.skipif(not OPENCV_AVAILABLE, reason="OpenCV not available")
@@ -192,8 +192,7 @@ def test_comprehensive_integration():
     print("\n" + "="*60)
     print("ALL INTEGRATION TESTS PASSED")
     print("Key findings:")
-    print("- Einit provides excellent initialization quality")
-    print("- Often outperforms iterative ICP refinement")
+    print("- Einit provides good initialization quality")
     print("- Fully compatible with OpenCV transformation format")
     print("="*60)
 

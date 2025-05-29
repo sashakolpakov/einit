@@ -50,7 +50,7 @@ def visualize_bunny_failures(noise_std=0.02, overlap_fraction=0.8, n_points=3000
         clean_rmse = np.sqrt(np.mean(np.linalg.norm(src_clean_aligned - dst_clean, axis=1)**2))
         
         # Store failure cases
-        if transform_error > 1.0 or clean_rmse > 0.1:
+        if transform_error > 0.08 or clean_rmse > 0.08:
             failures.append({
                 'seed': 1000 + i,
                 'transform_error': transform_error,

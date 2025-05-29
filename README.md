@@ -103,7 +103,7 @@ cd tests && python visualize_failures.py
 
 ## Documentation
 
-Full documentation: [https://einit.readthedocs.io](docs/_build/html/index.html)
+More comprehensive [documentation](https://sashakolpakov.github.io/einit/) available here. 
 
 ## Authors
 

@@ -30,14 +30,23 @@ print(T)  # 4x4 homogeneous transformation matrix
 
 ## Installation
 
+Install directly from GitHub:
+
 ```bash
-pip install einit
+pip install git+https://github.com/sashakolpakov/einit.git
 ```
 
 For development or testing:
 ```bash
-pip install einit[test]  # Includes matplotlib, pytest
-pip install einit[all]   # Everything including docs
+pip install "git+https://github.com/sashakolpakov/einit.git[test]"  # Includes matplotlib, pytest
+pip install "git+https://github.com/sashakolpakov/einit.git[all]"   # Everything including docs
+```
+
+Or clone and install locally:
+```bash
+git clone https://github.com/sashakolpakov/einit.git
+cd einit
+pip install -e .[test]  # Editable install with test dependencies
 ```
 
 ## Performance

@@ -43,14 +43,31 @@ Quick Start
 Installation
 ------------
 
+Install directly from GitHub:
+
 .. code-block:: bash
 
-   pip install einit
+   pip install git+https://github.com/sashakolpakov/einit.git
+
+For development or testing:
+
+.. code-block:: bash
+
+   pip install "git+https://github.com/sashakolpakov/einit.git[test]"  # Includes matplotlib, pytest
+   pip install "git+https://github.com/sashakolpakov/einit.git[all]"   # Everything including docs
+
+Or clone and install locally:
+
+.. code-block:: bash
+
+   git clone https://github.com/sashakolpakov/einit.git
+   cd einit
+   pip install -e .[test]  # Editable install with test dependencies
 
 Requirements:
 - Python ≥ 3.6
 - NumPy ≥ 1.15
-- OpenCV ≥ 3.4
+- SciPy ≥ 1.0
 
 Contents
 --------

@@ -34,7 +34,7 @@ def ellipsoid_init_icp(src_points, dst_points):
     if src_points.ndim != 2 or src_points.shape[1] != 3:
         raise ValueError("src_points must be (N,3) array")
     if dst_points.ndim != 2 or dst_points.shape[1] != 3:
-        raise ValueError("dst_points must be (N,3) array") 
+        raise ValueError("dst_points must be (N,3) array")
 
     # Center point clouds
     centroid_src = np.mean(src_points, axis=0)
@@ -45,8 +45,8 @@ def ellipsoid_init_icp(src_points, dst_points):
     # Compute ellipsoid matrices and eigendecompose
     Ep = P_centered.T @ P_centered  # 3 x 3
     Eq = Q_centered.T @ Q_centered  # 3 x 3
-    eigp, Up = np.linalg.eigh(Ep)
-    eigq, Uq = np.linalg.eigh(Eq)
+    _, Up = np.linalg.eigh(Ep)
+    _, Uq = np.linalg.eigh(Eq)
 
     # Initial transformation
     U0 = Uq @ Up.T
@@ -54,13 +54,11 @@ def ellipsoid_init_icp(src_points, dst_points):
     # Search all 8 discrete isometries for best alignment
     best_error = np.inf
     best_transform = U0
-    
-    for signs in [[1,1,1], [-1,1,1], [1,-1,1], [1,1,-1], 
+    for signs in [[1,1,1], [-1,1,1], [1,-1,1], [1,1,-1],
                   [-1,-1,1], [-1,1,-1], [1,-1,-1], [-1,-1,-1]]:
         U = U0 @ Up @ np.diag(signs) @ Up.T
         P_transformed = P_centered @ U.T  # Apply rotation to N x 3 points
         error = np.linalg.norm(P_transformed - Q_centered, ord='fro')
-        
         if error < best_error:
             best_error = error
             best_transform = U

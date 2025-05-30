@@ -38,8 +38,8 @@ pip install git+https://github.com/sashakolpakov/einit.git
 
 For development or testing:
 ```bash
-pip install "git+https://github.com/sashakolpakov/einit.git[test]"  # Includes matplotlib, pytest
-pip install "git+https://github.com/sashakolpakov/einit.git[all]"   # Everything including docs
+pip install "einit[test] @ git+https://github.com/sashakolpakov/einit.git@main"  # Includes matplotlib, pytest
+pip install "einit[all] @ git+https://github.com/sashakolpakov/einit.git@main"   # Everything including docs
 ```
 
 Or clone and install locally:
@@ -53,13 +53,13 @@ pip install -e .[test]  # Editable install with test dependencies
 
 Real-world performance on test datasets:
 
-| Dataset | Points | RMSE | Time |
-|---------|--------|------|------|
-| Sphere  | 500    | 0.017| <1ms |  
-| Cube    | 1728   | 0.002| <1ms |
-| Bunny   | 1000   | 0.004| <1ms |
+| Dataset | Points | RMSE  | Time             |
+|---------|--------|-------|------------------|
+| Sphere  | 1500   | 0.03  | 0.006 ± 0.002 ms |  
+| Cube    | 3375   | 0.02  | 0.010 ± 0.008 ms |
+| Bunny   | 992    | 0.02  | 0.047 ± 0.021 ms |
 
-*With 2% noise and 80% overlap*
+*With 0.01-0.02 standard Gaussian noise and ~ 80% overlap*
 
 ## Algorithm
 

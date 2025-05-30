@@ -3,6 +3,13 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.6+](https://img.shields.io/badge/python-3.6+-blue.svg)](https://www.python.org/downloads/)
 
+<!-- CI status from GitHub Actions -->
+[![CI](https://img.shields.io/github/actions/workflow/status/sashakolpakov/einit/pylint.yml?branch=main&label=CI&logo=github)](https://github.com/sashakolpakov/einit/actions/workflows/pylint.yml) <!-- Docs status from GitHub Actions -->
+[![Docs](https://img.shields.io/github/actions/workflow/status/sashakolpakov/einit/deploy_docs.yml?branch=main&label=Docs&logo=github)](https://github.com/sashakolpakov/einit/actions/workflows/deploy_docs.yml) <!-- Docs health via HTTP ping -->
+[![Docs](https://img.shields.io/website-up-down-green-red/https/sashakolpakov.github.io/einit?label=API%20Documentation)](https://sashakolpakov.github.io/einit/)
+
+
+
 **einit** provides fast and robust initialization for 3D point cloud alignment using ellipsoid analysis. It computes optimal initial transformations by analyzing the ellipsoids of inertia of point clouds, often achieving excellent results without needing iterative refinement.
 
 ## Key Features

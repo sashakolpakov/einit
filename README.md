@@ -94,7 +94,7 @@ from einit import ellipsoid_init_icp
 # Get initial transformation
 T_init = ellipsoid_init_icp(src, dst)
 
-# Optional: refine with OpenCV if needed
+# Refine alignment with OpenCV 
 src_aligned = apply_transform(src, T_init)
 retval, T_refined, inliers = cv2.estimateAffine3D(
     src_aligned.astype(np.float32), 

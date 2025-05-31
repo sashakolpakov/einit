@@ -10,7 +10,6 @@
 [![Docs](https://img.shields.io/website-up-down-green-red/https/sashakolpakov.github.io/einit?label=API%20Documentation)](https://sashakolpakov.github.io/einit/)
 
 
-
 **einit** provides fast and robust initialization for 3D point cloud alignment using ellipsoid analysis. It computes optimal initial transformations by analyzing the ellipsoids of inertia of point clouds, often achieving excellent results without needing iterative refinement.
 
 ## Key Features
@@ -38,7 +37,13 @@ print(T)  # 4x4 homogeneous transformation matrix
 
 ## Installation
 
-Install directly from GitHub:
+There are multiple installation options. One of them is to install the current release from PyPI:
+
+```bash
+pip install einit
+```
+
+Another option is to install most recent builds directly from GitHub:
 
 ```bash
 pip install git+https://github.com/sashakolpakov/einit.git
@@ -111,7 +116,7 @@ cd tests && python visualize_failures.py
 
 ## Documentation
 
-More comprehensive [documentation](https://sashakolpakov.github.io/einit/) available here. 
+More comprehensive [documentation](https://sashakolpakov.github.io/einit/) is available. 
 
 ## Authors
 
@@ -122,6 +127,10 @@ More comprehensive [documentation](https://sashakolpakov.github.io/einit/) avail
 ## License
 
 MIT License - see [LICENSE](LICENSE) file for details.
+
+## Acknowledgement
+
+This work is supported by the Google Cloud Research Award number GCP19980904.
 
 ## Citation
 

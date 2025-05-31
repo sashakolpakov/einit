@@ -114,6 +114,10 @@ Visualize failure cases:
 cd tests && python visualize_failures.py
 ```
 
+More benchmarking results are contained in the Jupyter notebook. [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](
+  https://colab.research.google.com/github/sashakolpakov/einit/blob/main/tests/visual_tests.ipynb
+)
+
 ## Documentation
 
 More comprehensive [documentation](https://sashakolpakov.github.io/einit/) is available. 

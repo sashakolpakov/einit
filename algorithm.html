@@ -1,0 +1,297 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Algorithm Details &mdash; einit 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=01f34227"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "displayMath": [["$$", "$$"], ["\\[", "\\]"]]}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="API Reference" href="api.html" />
+    <link rel="prev" title="einit: Fast and Robust Ellipsoid ICP Initialization" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            einit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentation:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Algorithm Details</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#step-by-step-breakdown">Step-by-Step Breakdown</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#input-validation-and-preprocessing">1. Input Validation and Preprocessing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#centroid-computation-and-centering">2. Centroid Computation and Centering</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ellipsoid-of-inertia-computation">3. Ellipsoid of Inertia Computation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#eigendecomposition">4. Eigendecomposition</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#reflection-search">5. Reflection Search</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#error-computation-and-selection">6. Error Computation and Selection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#homogeneous-transformation-matrix">7. Homogeneous Transformation Matrix</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#mathematical-properties">Mathematical Properties</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#optimality">Optimality</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#complexity-analysis">Complexity Analysis</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#robustness-properties">Robustness Properties</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#applications-and-use-cases">Applications and Use Cases</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#implementation-notes">Implementation Notes</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="integration.html">OpenCV Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="integration.html#integration-with-other-libraries">Integration with Other Libraries</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">einit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Algorithm Details</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/algorithm.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="algorithm-details">
+<h1>Algorithm Details<a class="headerlink" href="#algorithm-details" title="Link to this heading"></a></h1>
+<p>The ellipsoid initialization algorithm provides a robust method for computing initial transformations between 3D point clouds. This section provides a detailed explanation of the mathematical foundation and implementation.</p>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
+<p>The algorithm is based on the insight that 3D objects being aligned means that their ellipsoids of inertia being aligned, and that the principal axes of these ellipsoids provide a natural coordinate system for the best alignment. By analyzing the covariance structure of point clouds, we can identify these principal axes and use them to compute optimal initial transformations. However, here the covariance is taken not from point to point, but from one coordinate axis to the other. In this case, if we have an array of shape (N, 3), the shape of the covariance matrix is not (N, N), as it would be for the Gram matrix, but rather (3, 3). The latter describes the distribution of mass (or inertia) of the point cloud along the coordinate axes.</p>
+</section>
+<section id="step-by-step-breakdown">
+<h2>Step-by-Step Breakdown<a class="headerlink" href="#step-by-step-breakdown" title="Link to this heading"></a></h2>
+<section id="input-validation-and-preprocessing">
+<h3>1. Input Validation and Preprocessing<a class="headerlink" href="#input-validation-and-preprocessing" title="Link to this heading"></a></h3>
+<p>The algorithm begins by validating that both input point clouds are (N, 3) arrays representing 3D coordinates:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="n">src_points</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">src_points</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">3</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;src_points and dst_points must both be (:,3) arrays&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This ensures that the inputs are properly formatted 3D point clouds with the same number of points.</p>
+</section>
+<section id="centroid-computation-and-centering">
+<h3>2. Centroid Computation and Centering<a class="headerlink" href="#centroid-computation-and-centering" title="Link to this heading"></a></h3>
+<p>Both point clouds are centered at their respective centroids:</p>
+<div class="math notranslate nohighlight">
+\[\bar{p} = \frac{1}{n}\sum_{i=1}^n p_i, \quad \bar{q} = \frac{1}{m}\sum_{j=1}^m q_j\]</div>
+<div class="math notranslate nohighlight">
+\[P_c = P - \bar{p}, \quad Q_c = Q - \bar{q}\]</div>
+<p>This step removes the translational component of the transformation, allowing us to focus on the rotational alignment.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">_centroid_and_center</span><span class="p">(</span><span class="n">pts</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">pts</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">pts</span> <span class="o">-</span> <span class="n">c</span><span class="p">,</span> <span class="n">c</span>
+
+<span class="n">src_c</span><span class="p">,</span> <span class="n">cs</span> <span class="o">=</span> <span class="n">_centroid_and_center</span><span class="p">(</span><span class="n">src_points</span><span class="p">)</span>
+<span class="n">dst_c</span><span class="p">,</span> <span class="n">ct</span> <span class="o">=</span> <span class="n">_centroid_and_center</span><span class="p">(</span><span class="n">dst_points</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="ellipsoid-of-inertia-computation">
+<h3>3. Ellipsoid of Inertia Computation<a class="headerlink" href="#ellipsoid-of-inertia-computation" title="Link to this heading"></a></h3>
+<p>The algorithm computes covariance matrices for both centered point clouds:</p>
+<div class="math notranslate nohighlight">
+\[E_P = P_c^T P_c, \quad E_Q = Q_c^T Q_c\]</div>
+<p>In the implementation, we write:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">Ep</span> <span class="o">=</span> <span class="n">src_c</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">src_c</span>  <span class="c1"># 3×3 covariance matrix for source</span>
+<span class="n">Eq</span> <span class="o">=</span> <span class="n">dst_c</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">dst_c</span>  <span class="c1"># 3×3 covariance matrix for destination</span>
+</pre></div>
+</div>
+</section>
+<section id="eigendecomposition">
+<h3>4. Eigendecomposition<a class="headerlink" href="#eigendecomposition" title="Link to this heading"></a></h3>
+<p>Each covariance matrix is decomposed into its eigenvalues and eigenvectors:</p>
+<div class="math notranslate nohighlight">
+\[E_P = U_P \Lambda_P U_P^T, \quad E_Q = U_Q \Lambda_Q U_Q^T\]</div>
+<p>where <span class="math notranslate nohighlight">\(U_P, U_Q\)</span> are orthogonal matrices containing the eigenvectors (principal axes), and <span class="math notranslate nohighlight">\(\Lambda_P, \Lambda_Q\)</span> are diagonal matrices of eigenvalues.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">eigp</span><span class="p">,</span> <span class="n">Up</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eigh</span><span class="p">(</span><span class="n">Ep</span><span class="p">)</span>  <span class="c1"># eigenvalues and eigenvectors for source</span>
+<span class="n">eigq</span><span class="p">,</span> <span class="n">Uq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eigh</span><span class="p">(</span><span class="n">Eq</span><span class="p">)</span>  <span class="c1"># eigenvalues and eigenvectors for destination</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">numpy.linalg.eigh</span></code> function is used because the covariance matrices are symmetric and positive semi-definite.</p>
+</section>
+<section id="reflection-search">
+<h3>5. Reflection Search<a class="headerlink" href="#reflection-search" title="Link to this heading"></a></h3>
+<p>The core innovation of this algorithm is the systematic search through all possible axis orientations. Since eigendecomposition can produce eigenvectors pointing in either direction along each axis, we need to test all <span class="math notranslate nohighlight">\(2^3 = 8\)</span> possible combinations of orientations.</p>
+<p>For each combination of signs <span class="math notranslate nohighlight">\(s_1, s_2, s_3 \in \{-1, +1\}\)</span>, we construct a diagonal reflection matrix:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}D = \begin{pmatrix}
+s_1 &amp; 0 &amp; 0 \\
+0 &amp; s_2 &amp; 0 \\
+0 &amp; 0 &amp; s_3
+\end{pmatrix}\end{split}\]</div>
+<p>And compute the corresponding rotation matrix:</p>
+<div class="math notranslate nohighlight">
+\[R = U_Q D U_P^T\]</div>
+<p>The translation is then computed as:</p>
+<div class="math notranslate nohighlight">
+\[t = \bar{q} - R\bar{p}\]</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">best_err</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+<span class="n">best_R</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">best_t</span> <span class="o">=</span> <span class="kc">None</span>
+
+<span class="k">for</span> <span class="n">signs</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">([</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">repeat</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
+    <span class="n">D</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">signs</span><span class="p">)</span>
+    <span class="n">R</span> <span class="o">=</span> <span class="n">Uq</span> <span class="o">@</span> <span class="n">D</span> <span class="o">@</span> <span class="n">Up</span><span class="o">.</span><span class="n">T</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">ct</span> <span class="o">-</span> <span class="n">R</span> <span class="o">@</span> <span class="n">cs</span>
+
+    <span class="n">transformed</span> <span class="o">=</span> <span class="p">(</span><span class="n">R</span> <span class="o">@</span> <span class="n">src_c</span><span class="o">.</span><span class="n">T</span><span class="p">)</span><span class="o">.</span><span class="n">T</span> <span class="o">+</span> <span class="n">t</span>
+    <span class="n">err</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">transformed</span> <span class="o">-</span> <span class="n">dst_c</span><span class="p">,</span> <span class="nb">ord</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">err</span> <span class="o">&lt;</span> <span class="n">best_err</span><span class="p">:</span>
+        <span class="n">best_err</span> <span class="o">=</span> <span class="n">err</span>
+        <span class="n">best_R</span> <span class="o">=</span> <span class="n">R</span>
+        <span class="n">best_t</span> <span class="o">=</span> <span class="n">t</span>
+</pre></div>
+</div>
+</section>
+<section id="error-computation-and-selection">
+<h3>6. Error Computation and Selection<a class="headerlink" href="#error-computation-and-selection" title="Link to this heading"></a></h3>
+<p>For each candidate transformation, we apply it to the centered source points and compute the Frobenius norm of the alignment error:</p>
+<div class="math notranslate nohighlight">
+\[\text{error} = \|Q_c - R P_c\|_F = \sqrt{\sum_{i,j} (Q_c - R P_c)_{ij}^2}\]</div>
+<p>The transformation with the minimum error is selected as the optimal initialization.</p>
+</section>
+<section id="homogeneous-transformation-matrix">
+<h3>7. Homogeneous Transformation Matrix<a class="headerlink" href="#homogeneous-transformation-matrix" title="Link to this heading"></a></h3>
+<p>Finally, the optimal rotation and translation are packed into a 4×4 homogeneous transformation matrix:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}T = \begin{pmatrix}
+R &amp; t \\
+0^T &amp; 1
+\end{pmatrix}\end{split}\]</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">T</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">best_R</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+<span class="n">T</span><span class="p">[:</span><span class="mi">3</span><span class="p">,</span> <span class="p">:</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">best_R</span>
+<span class="n">T</span><span class="p">[:</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">best_t</span>
+<span class="k">return</span> <span class="n">T</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="mathematical-properties">
+<h2>Mathematical Properties<a class="headerlink" href="#mathematical-properties" title="Link to this heading"></a></h2>
+<section id="optimality">
+<h3>Optimality<a class="headerlink" href="#optimality" title="Link to this heading"></a></h3>
+<p>The algorithm finds the globally optimal solution within the constraint of axis-aligned rotations. While this may not be the globally optimal rigid transformation, it provides a good initialization that captures the primary geometric structure of the point clouds.</p>
+</section>
+<section id="complexity-analysis">
+<h3>Complexity Analysis<a class="headerlink" href="#complexity-analysis" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Time Complexity</strong>: O(n) where n is the number of points
+- Centroid computation: O(n)
+- Covariance matrices: O(n)
+- Eigendecomposition: O(1) (3×3 matrices)
+- Reflection search: O(1) (8 iterations)
+- Error computation: O(n) per iteration</p></li>
+<li><p><strong>Space Complexity</strong>: O(1) additional memory beyond input storage</p></li>
+</ul>
+</section>
+<section id="robustness-properties">
+<h3>Robustness Properties<a class="headerlink" href="#robustness-properties" title="Link to this heading"></a></h3>
+<p>The algorithm exhibits several desirable robustness properties:</p>
+<ol class="arabic simple">
+<li><p><strong>Scale Invariance</strong>: The algorithm is invariant to uniform scaling of the input point clouds</p></li>
+<li><p><strong>Noise Tolerance</strong>: Reasonable amounts of noise in the point coordinates have minimal impact on the principal axes</p></li>
+<li><p><strong>Partial Overlap</strong>: The algorithm works even when the point clouds don’t have perfect correspondence, have occlusions, discrepancy in the number of points and in their mutual correspondences</p></li>
+</ol>
+</section>
+</section>
+<section id="applications-and-use-cases">
+<h2>Applications and Use Cases<a class="headerlink" href="#applications-and-use-cases" title="Link to this heading"></a></h2>
+<p>The ellipsoid initialization algorithm is particularly well-suited for:</p>
+<ol class="arabic simple">
+<li><p><strong>ICP Preprocessing</strong>: Providing good initial guesses for ICP algorithms</p></li>
+<li><p><strong>Multi-Modal Registration</strong>: Aligning point clouds from different sensors</p></li>
+<li><p><strong>Shape Analysis</strong>: Initial alignment for shape comparison and analysis</p></li>
+<li><p><strong>Real-Time Applications</strong>: Fast initialization for time-critical applications</p></li>
+</ol>
+</section>
+<section id="implementation-notes">
+<h2>Implementation Notes<a class="headerlink" href="#implementation-notes" title="Link to this heading"></a></h2>
+<p><strong>Numerical Stability</strong>
+The implementation uses <code class="docutils literal notranslate"><span class="pre">numpy.linalg.eigh</span></code> for eigendecomposition, which is numerically stable for symmetric matrices. The algorithm avoids matrix inversions and uses well-conditioned operations throughout.</p>
+<p><strong>Memory Efficiency</strong>
+The algorithm operates primarily on small 3×3 matrices regardless of the input size, making it memory-efficient even for large point clouds.</p>
+<p><strong>Floating Point Precision</strong>
+The algorithm preserves the input data type (float32 or float64) throughout the computation, maintaining appropriate numerical precision for the application.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="einit: Fast and Robust Ellipsoid ICP Initialization" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="api.html" class="btn btn-neutral float-right" title="API Reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Alexander Kolpakov (UATX), Michael Werman (HUJI), Judah Levin (UATX).</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

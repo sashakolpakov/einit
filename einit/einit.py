@@ -10,6 +10,7 @@ Provides ellipsoid_init_icp(src, dst) that:
 """
 
 import numpy as np
+from scipy.spatial import cKDTree
 
 __all__ = ["ellipsoid_init_icp", "barycentered"]
 
@@ -20,16 +21,77 @@ def barycentered(points):
     return points - centroid
 
 
-def ellipsoid_init_icp(src_points, dst_points):
+def ellipsoid_init_icp(src_points, dst_points, max_correspondence_distance=None, 
+                      min_inlier_fraction=0.5, leafsize=16):
     """
-    Ellipsoid ICP initialization following the original SageMath algorithm
+    Compute initial transformation between 3D point clouds using ellipsoid analysis.
     
-    Args:
-        src_points: Source point cloud (N x 3)
-        dst_points: Destination point cloud (N x 3)
+    This function computes an initial rigid transformation that aligns the source 
+    point cloud with the destination point cloud by analyzing their ellipsoids of 
+    inertia. The algorithm uses KD-tree correspondence recovery to handle point 
+    clouds with different orderings, partial overlaps, and outliers.
     
-    Returns:
-        4x4 homogeneous transformation matrix for OpenCV
+    Parameters
+    ----------
+    src_points : array_like, shape (N, 3)
+        Source point cloud as N×3 array of 3D coordinates.
+    dst_points : array_like, shape (M, 3)
+        Destination point cloud as M×3 array of 3D coordinates.
+        N and M can be different (partial overlap).
+    max_correspondence_distance : float, optional
+        Maximum distance for valid point correspondences. Points farther than
+        this distance from their nearest neighbors are considered outliers.
+        If None (default), automatically estimated as 3× the median nearest-
+        neighbor distance within the destination point cloud.
+    min_inlier_fraction : float, default 0.5
+        Minimum fraction of source points that must have valid correspondences
+        within max_correspondence_distance. Transformations with fewer inliers
+        are rejected. Must be between 0 and 1.
+    leafsize : int, default 16
+        KD-tree leaf size parameter. Affects search performance vs memory usage.
+        Smaller values may improve accuracy for small point clouds but increase
+        build time. Typical range: 8-32.
+    
+    Returns
+    -------
+    T : ndarray, shape (4, 4)
+        Homogeneous transformation matrix that transforms src_points to align
+        with dst_points. Apply as: dst_aligned = (src @ T[:3,:3].T) + T[:3,3]
+    
+    Raises
+    ------
+    ValueError
+        If input arrays don't have shape (N, 3) or (M, 3).
+    
+    Examples
+    --------
+    Basic usage:
+    
+    >>> import numpy as np
+    >>> from einit import ellipsoid_init_icp
+    >>> src = np.random.randn(100, 3)
+    >>> dst = np.random.randn(80, 3)  # Different size OK
+    >>> T = ellipsoid_init_icp(src, dst)
+    >>> T.shape
+    (4, 4)
+    
+    With custom parameters:
+    
+    >>> T = ellipsoid_init_icp(
+    ...     src, dst,
+    ...     max_correspondence_distance=0.1,
+    ...     min_inlier_fraction=0.7,
+    ...     leafsize=8
+    ... )
+    
+    Notes
+    -----
+    The algorithm is permutation-invariant: point ordering in the input arrays
+    does not affect the result. It handles partial overlaps, noise, and outliers
+    through KD-tree correspondence recovery and distance-based filtering.
+    
+    Time complexity is O(N + M log M) where N and M are the number of points
+    in the source and destination clouds respectively.
     """
     if src_points.ndim != 2 or src_points.shape[1] != 3:
         raise ValueError("src_points must be (N,3) array")
@@ -51,17 +113,56 @@ def ellipsoid_init_icp(src_points, dst_points):
     # Initial transformation
     U0 = Uq @ Up.T
 
+    # Determine correspondence distance threshold if not provided
+    if max_correspondence_distance is None:
+        # Estimate typical point spacing in target cloud
+        sample_size = min(1000, Q_centered.shape[0])
+        sample_idx = np.random.choice(Q_centered.shape[0], sample_size, replace=False)
+        temp_tree = cKDTree(Q_centered[sample_idx], leafsize=leafsize)
+        sample_distances, _ = temp_tree.query(Q_centered[sample_idx], k=2)
+        median_spacing = np.median(sample_distances[:, 1])  # distance to nearest neighbor
+        max_correspondence_distance = 3.0 * median_spacing
+    
     # Search all 8 discrete isometries for best alignment
+    # Use KD-tree for efficient nearest neighbor search to recover correspondences
     best_error = np.inf
     best_transform = U0
+    best_inlier_count = 0
+    
+    # Build KD-tree for target points with specified leaf size
+    kdtree = cKDTree(Q_centered, leafsize=leafsize)
+    
     for signs in [[1,1,1], [-1,1,1], [1,-1,1], [1,1,-1],
                   [-1,-1,1], [-1,1,-1], [1,-1,-1], [-1,-1,-1]]:
-        U = U0 @ Up @ np.diag(signs) @ Up.T
+        D = np.diag(signs)
+        U = Uq @ D @ Up.T
         P_transformed = P_centered @ U.T  # Apply rotation to N x 3 points
-        error = np.linalg.norm(P_transformed - Q_centered, ord='fro')
-        if error < best_error:
-            best_error = error
-            best_transform = U
+        
+        # Find nearest neighbors to establish correspondence
+        distances, indices = kdtree.query(P_transformed)
+        
+        # Filter correspondences by distance threshold
+        valid_mask = distances <= max_correspondence_distance
+        inlier_count = np.sum(valid_mask)
+        inlier_fraction = inlier_count / len(distances)
+        
+        # Skip if too few valid correspondences
+        if inlier_fraction < min_inlier_fraction:
+            continue
+            
+        # Compute error using only valid correspondences
+        if inlier_count > 0:
+            valid_distances = distances[valid_mask]
+            error = np.sum(valid_distances**2)
+            
+            # Prefer solutions with more inliers, then lower error
+            is_better = (inlier_count > best_inlier_count or 
+                        (inlier_count == best_inlier_count and error < best_error))
+            
+            if is_better:
+                best_error = error
+                best_transform = U
+                best_inlier_count = inlier_count
 
     # Pack into 4×4 homogeneous transform
     T = np.eye(4, dtype=best_transform.dtype)

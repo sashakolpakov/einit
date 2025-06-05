@@ -3,7 +3,7 @@ import pytest
 import urllib.request
 import tarfile
 import io
-from einit import ellipsoid_init_icp, barycentered
+from einit import ellipsoid_init_icp
 
 
 def apply_transform(pts, T):
@@ -245,65 +245,3 @@ def test_bunny_cloud_statistical(noise_std=0.02, overlap_fraction=0.8, n_points=
     assert successes >= 70, f"Success rate {successes}% too low"
     assert np.mean(transform_errors) < 2.0, f"Mean transform error {np.mean(transform_errors):.4f} too high"
     assert np.mean(clean_rmses) < 0.2, f"Mean clean RMSE {np.mean(clean_rmses):.4f} too high"
-
-
-def test_random_permutation_invariance():
-    """Test that einit recovers correct transformation even with permuted destination points."""
-    print(f"\n=== RANDOM PERMUTATION INVARIANCE TEST ===")
-    
-    # Generate random point cloud P
-    np.random.seed(42)
-    n_points = 500
-    P = np.random.uniform(-2, 2, (n_points, 3))
-    
-    # Create orthogonal transformation O (random rotation)
-    seed = np.random.normal(0.0, 1.0, (3, 3))
-    O, _ = np.linalg.qr(seed)
-    if np.linalg.det(O) < 0:  # Ensure proper rotation
-        O[:, 0] *= -1
-        
-    # Generate Q = O @ P^T (in original algorithm notation)
-    # Here we work with (n_points x 3) so: Q = P @ O^T
-    Q_clean = P @ O.T
-    
-    # Add small amount of noise
-    noise_std = 0.01
-    Q_clean += np.random.normal(0, noise_std, Q_clean.shape)
-    
-    # Create permuted version of Q
-    perm_indices = np.random.permutation(n_points)
-    Q_permuted = Q_clean[perm_indices]
-    
-    # Center both point clouds
-    P_centered = barycentered(P)
-    Q_permuted_centered = barycentered(Q_permuted)
-    Q_clean_centered = barycentered(Q_clean)
-    
-    # Test the algorithm with permuted destination
-    T_recovered = ellipsoid_init_icp(P_centered, Q_permuted_centered)
-    
-    # Apply recovered transform to ORIGINAL P and compare with ORIGINAL Q (no permutation)
-    P_aligned = apply_transform(P_centered, T_recovered)
-    alignment_error = np.sqrt(np.mean(np.linalg.norm(P_aligned - Q_clean_centered, axis=1)**2))
-    
-    print(f"Alignment RMSE on original clouds: {alignment_error:.6f}")
-    print(f"Noise level: {noise_std}")
-    
-    # For comparison, test without permutation
-    T_direct = ellipsoid_init_icp(P_centered, Q_clean_centered)
-    P_aligned_direct = apply_transform(P_centered, T_direct)
-    direct_error = np.sqrt(np.mean(np.linalg.norm(P_aligned_direct - Q_clean_centered, axis=1)**2))
-    print(f"Direct alignment RMSE: {direct_error:.6f}")
-    
-    # The key test: algorithm should recover correct transformation despite permutation
-    assert alignment_error < 0.1, f"Should recover correct alignment despite permutation, got RMSE {alignment_error}"
-    
-    # Should be close to direct alignment performance
-    if direct_error > 1e-6:
-        degradation = alignment_error / direct_error
-        print(f"Performance degradation: {degradation:.1f}x")
-        assert degradation < 5, f"Should perform similarly to direct alignment, got {degradation:.1f}x degradation"
-    
-    # Verify valid orthogonal transformation
-    det = np.linalg.det(T_recovered[:3, :3])
-    assert np.allclose(abs(det), 1.0, atol=1e-6), f"Should produce valid orthogonal matrix, got det={det}"

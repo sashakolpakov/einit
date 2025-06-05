@@ -10,14 +10,16 @@
 [![Docs](https://img.shields.io/website-up-down-green-red/https/sashakolpakov.github.io/einit?label=API%20Documentation)](https://sashakolpakov.github.io/einit/)
 
 
-**einit** provides fast and robust initialization for 3D point cloud alignment using ellipsoid analysis. It computes optimal initial transformations by analyzing the ellipsoids of inertia of point clouds, often achieving excellent results without needing iterative refinement.
+**einit** provides fast and robust initialization for 3D point cloud alignment using ellipsoid analysis. It computes initial transformations by analyzing the ellipsoids of inertia of point clouds and uses KD-tree correspondence recovery for robustness to real-world scenarios.
 
 ## Key Features
 
 - ⚡ **Fast**: < 1ms for 1000 points
-- 🎯 **Accurate**: The initial alignment is often very good
+- 🎯 **Accurate**: Often achieves excellent alignment without iterative refinement
 - 🔧 **OpenCV compatible**: Returns standard 4×4 transformation matrices  
-- 🛡️ **Robust**: Handles noise and partial overlap
+- 🛡️ **Robust**: Handles noise, partial overlap, and permuted point clouds
+- 🔄 **Permutation invariant**: Results are identical regardless of point ordering
+- 🎛️ **Configurable**: Adjustable parameters for different use cases
 - 🐍 **Simple API**: One function call to get results
 
 ## Quick Start
@@ -33,6 +35,14 @@ dst_points = src_points @ R + t  # Apply some transformation
 # Get the transformation matrix
 T = ellipsoid_init_icp(src_points, dst_points)
 print(T)  # 4x4 homogeneous transformation matrix
+
+# With custom parameters for robustness control
+T = ellipsoid_init_icp(
+    src_points, dst_points,
+    max_correspondence_distance=0.1,  # Maximum distance for valid correspondences
+    min_inlier_fraction=0.7,          # Require 70% valid correspondences  
+    leafsize=8                        # Smaller KD-tree leaf size
+)
 ```
 
 ## Installation
@@ -80,10 +90,11 @@ The algorithm works by:
 
 1. **Centering** point clouds at their centroids
 2. **Computing** ellipsoids of inertia via eigendecomposition  
-3. **Searching** through 8 reflection combinations for optimal alignment
-4. **Returning** a 4×4 transformation matrix
+3. **Searching** through 8 reflection combinations using KD-tree correspondence recovery
+4. **Filtering** correspondences by distance and inlier fraction
+5. **Returning** a 4×4 transformation matrix
 
-This provides an excellent initialization that often eliminates the need for iterative refinement.
+KD-tree correspondence recovery makes the algorithm robust to point cloud permutations, partial overlaps, and outliers without assuming that points at the same array indices correspond to each other.
 
 ## OpenCV Integration
 

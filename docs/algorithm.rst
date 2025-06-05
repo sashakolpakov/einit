@@ -1,12 +1,16 @@
 Algorithm Details
 =================
 
-The ellipsoid initialization algorithm provides a robust method for computing initial transformations between 3D point clouds. This section provides a detailed explanation of the mathematical foundation and implementation.
+The ellipsoid initialization algorithm computes initial transformations between 3D point clouds by aligning their principal axes. This section describes the mathematical foundation and implementation.
 
 Overview
 --------
 
-The algorithm is based on the insight that 3D objects being aligned means that their ellipsoids of inertia being aligned, and that the principal axes of these ellipsoids provide a natural coordinate system for the best alignment. By analyzing the covariance structure of point clouds, we can identify these principal axes and use them to compute optimal initial transformations. However, here the covariance is taken not from point to point, but from one coordinate axis to the other. In this case, if we have an array of shape (N, 3), the shape of the covariance matrix is not (N, N), as it would be for the Gram matrix, but rather (3, 3). The latter describes the distribution of mass (or inertia) of the point cloud along the coordinate axes. 
+The algorithm assumes that aligning 3D objects requires aligning their ellipsoids of inertia. The principal axes of these ellipsoids provide a coordinate system for computing the transformation. The covariance matrices describe the distribution of points along coordinate axes rather than point-to-point relationships.
+
+For point clouds with shape (N, 3), the covariance matrix has shape (3, 3), describing the distribution of mass along coordinate axes rather than the (N, N) Gram matrix that would describe point-to-point relationships.
+
+The implementation uses KD-tree nearest neighbor search to find point correspondences during transformation evaluation. This handles point clouds with different orderings, partial overlaps, and missing correspondences without assuming that points at the same array indices correspond to each other. 
 
 Step-by-Step Breakdown
 ----------------------
@@ -77,10 +81,10 @@ where :math:`U_P, U_Q` are orthogonal matrices containing the eigenvectors (prin
 
 The ``numpy.linalg.eigh`` function is used because the covariance matrices are symmetric and positive semi-definite.
 
-5. Reflection Search
-~~~~~~~~~~~~~~~~~~~~
+5. Reflection Search and Correspondence Recovery
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The core innovation of this algorithm is the systematic search through all possible axis orientations. Since eigendecomposition can produce eigenvectors pointing in either direction along each axis, we need to test all :math:`2^3 = 8` possible combinations of orientations.
+The algorithm tests all :math:`2^3 = 8` possible axis orientations since eigendecomposition can produce eigenvectors pointing in either direction along each axis.
 
 For each combination of signs :math:`s_1, s_2, s_3 \in \{-1, +1\}`, we construct a diagonal reflection matrix:
 
@@ -94,43 +98,58 @@ For each combination of signs :math:`s_1, s_2, s_3 \in \{-1, +1\}`, we construct
 And compute the corresponding rotation matrix:
 
 .. math::
-   R = U_Q D U_P^T
+   R = U_Q U_P^T D U_P U_P^T = U_Q D U_P^T
 
-The translation is then computed as:
-
-.. math::
-   t = \bar{q} - R\bar{p}
+The implementation uses a KD-tree to find nearest neighbor correspondences for each candidate transformation:
 
 .. code-block:: python
 
-   best_err = np.inf
-   best_R = None
-   best_t = None
-
-   for signs in itertools.product([-1, 1], repeat=3):
-       D = np.diag(signs)
-       R = Uq @ D @ Up.T
-       t = ct - R @ cs
+   # Build KD-tree for target points
+   kdtree = cKDTree(Q_centered, leafsize=leafsize)
+   
+   best_error = np.inf
+   best_transform = U0
+   
+   for signs in [[1,1,1], [-1,1,1], [1,-1,1], [1,1,-1],
+                 [-1,-1,1], [-1,1,-1], [1,-1,-1], [-1,-1,-1]]:
+       U = U0 @ Up @ np.diag(signs) @ Up.T
+       P_transformed = P_centered @ U.T
        
-       transformed = (R @ src_c.T).T + t
-       err = np.linalg.norm(transformed - dst_c, ord=2)
+       # Find nearest neighbors to establish correspondence
+       distances, indices = kdtree.query(P_transformed)
        
-       if err < best_err:
-           best_err = err
-           best_R = R
-           best_t = t
+       # Filter correspondences by distance threshold
+       valid_mask = distances <= max_correspondence_distance
+       if np.sum(valid_mask) / len(distances) < min_inlier_fraction:
+           continue
+           
+       # Compute error using valid correspondences only
+       error = np.sum(distances[valid_mask]**2)
 
 6. Error Computation and Selection
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-For each candidate transformation, we apply it to the centered source points and compute the Frobenius norm of the alignment error:
+For each candidate transformation, the algorithm computes the sum of squared distances between transformed source points and their nearest neighbors in the target cloud:
 
 .. math::
-   \text{error} = \|Q_c - R P_c\|_F = \sqrt{\sum_{i,j} (Q_c - R P_c)_{ij}^2}
+   \text{error} = \sum_{i \in \text{valid}} d_i^2
 
-The transformation with the minimum error is selected as the optimal initialization.
+where :math:`d_i` is the distance from transformed source point :math:`i` to its nearest neighbor in the target cloud, and the sum includes only correspondences within the distance threshold.
 
-7. Homogeneous Transformation Matrix
+The transformation with the minimum error and sufficient inlier count is selected as the optimal initialization.
+
+7. Parameter Configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The algorithm accepts several parameters for robustness control:
+
+**max_correspondence_distance**: Maximum distance for valid point correspondences. If not specified, the algorithm estimates this as 3 times the median nearest-neighbor distance within the target cloud.
+
+**min_inlier_fraction**: Minimum fraction of points that must have valid correspondences (default 0.5). Transformations with insufficient inliers are rejected.
+
+**leafsize**: KD-tree leaf size parameter affecting search performance (default 16). Smaller values may improve accuracy for small point clouds at the cost of build time.
+
+8. Homogeneous Transformation Matrix
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Finally, the optimal rotation and translation are packed into a 4×4 homogeneous transformation matrix:
@@ -171,11 +190,13 @@ Complexity Analysis
 Robustness Properties
 ~~~~~~~~~~~~~~~~~~~~~
 
-The algorithm exhibits several desirable robustness properties:
+The algorithm handles several challenging scenarios:
 
-1. **Scale Invariance**: The algorithm is invariant to uniform scaling of the input point clouds
-2. **Noise Tolerance**: Reasonable amounts of noise in the point coordinates have minimal impact on the principal axes
-3. **Partial Overlap**: The algorithm works even when the point clouds don't have perfect correspondence, have occlusions, discrepancy in the number of points and in their mutual correspondences 
+1. **Scale Invariance**: Uniform scaling of input point clouds does not affect the result
+2. **Noise Tolerance**: Moderate noise in point coordinates has limited impact on principal axes computation
+3. **Partial Overlap**: Works with point clouds that have different numbers of points, occlusions, and missing correspondences
+4. **Permutation Invariance**: Point ordering in the input arrays does not affect the result
+5. **Outlier Rejection**: Distance thresholding filters out poor correspondences 
 
 
 Applications and Use Cases

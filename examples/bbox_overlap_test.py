@@ -159,6 +159,8 @@ def bbox_overlap_analysis(noise_std=0.02, overlap_fraction=0.8, n_points=3000, s
         # Debug: print bbox sizes for first few trials
         if i < 5:
             print(f"Trial {i}: bbox src={bbox_src_size}, dst={bbox_dst_size}")
+        elif i==5:
+            print("Further output suppressed. Running the remaining trials ... \n")
         
         # Ensure we have enough points
         if len(src_o) < 50 or len(dst_o) < 50:
@@ -177,7 +179,7 @@ def bbox_overlap_analysis(noise_std=0.02, overlap_fraction=0.8, n_points=3000, s
         dst_o_permuted = dst_o[perm_idx]
         
         # Run einit with KD-tree (should handle permutations)
-        T_recovered = ellipsoid_init_icp(src_o, dst_o_permuted)
+        T_recovered = ellipsoid_init_icp(src_o, dst_o_permuted, positive_only=False)
         
         # Compute errors - use full clouds for clean evaluation
         transform_error = np.linalg.norm(T_recovered - T_true, ord='fro')

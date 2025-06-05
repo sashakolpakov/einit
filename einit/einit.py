@@ -21,8 +21,8 @@ def barycentered(points):
     return points - centroid
 
 
-def ellipsoid_init_icp(src_points, dst_points, max_correspondence_distance=None, 
-                      min_inlier_fraction=0.5, leafsize=16):
+def ellipsoid_init_icp(src_points, dst_points, max_correspondence_distance=None,
+                      min_inlier_fraction=0.5, leafsize=16, positive_only=False):
     """
     Compute initial transformation between 3D point clouds using ellipsoid analysis.
     
@@ -51,6 +51,11 @@ def ellipsoid_init_icp(src_points, dst_points, max_correspondence_distance=None,
         KD-tree leaf size parameter. Affects search performance vs memory usage.
         Smaller values may improve accuracy for small point clouds but increase
         build time. Typical range: 8-32.
+    positive_only : bool, default False
+        If True, only search proper rotations (determinant +1) by considering
+        only sign combinations with an even number of negative values. This
+        prevents reflections and ensures chirality preservation. Recommended
+        when point distributions are spatially biased (e.g., bounding box overlap).
     
     Returns
     -------
@@ -81,7 +86,8 @@ def ellipsoid_init_icp(src_points, dst_points, max_correspondence_distance=None,
     ...     src, dst,
     ...     max_correspondence_distance=0.1,
     ...     min_inlier_fraction=0.7,
-    ...     leafsize=8
+    ...     leafsize=8,
+    ...     positive_only=True
     ... )
     
     Notes
@@ -120,45 +126,50 @@ def ellipsoid_init_icp(src_points, dst_points, max_correspondence_distance=None,
         sample_idx = np.random.choice(Q_centered.shape[0], sample_size, replace=False)
         temp_tree = cKDTree(Q_centered[sample_idx], leafsize=leafsize)
         sample_distances, _ = temp_tree.query(Q_centered[sample_idx], k=2)
-        median_spacing = np.median(sample_distances[:, 1])  # distance to nearest neighbor
+        median_spacing = np.median(sample_distances[:, 1])
         max_correspondence_distance = 3.0 * median_spacing
-    
-    # Search all 8 discrete isometries for best alignment
+    # Search discrete isometries for best alignment
     # Use KD-tree for efficient nearest neighbor search to recover correspondences
     best_error = np.inf
     best_transform = U0
     best_inlier_count = 0
-    
     # Build KD-tree for target points with specified leaf size
     kdtree = cKDTree(Q_centered, leafsize=leafsize)
-    
-    for signs in [[1,1,1], [-1,1,1], [1,-1,1], [1,1,-1],
-                  [-1,-1,1], [-1,1,-1], [1,-1,-1], [-1,-1,-1]]:
+    # Choose sign combinations based on positive_only parameter
+    if positive_only:
+        # Determine which parity of negative signs gives positive determinant
+        base_det = np.linalg.det(Uq @ Up.T)
+        if base_det > 0:
+            # Need even number of negative signs
+            sign_combinations = [[1,1,1], [-1,-1,1], [-1,1,-1], [1,-1,-1]]
+        else:
+            # Need odd number of negative signs
+            sign_combinations = [[-1,1,1], [1,-1,1], [1,1,-1], [-1,-1,-1]]
+    else:
+        # All 8 isometries (4 proper rotations + 4 reflections)
+        sign_combinations = [[1,1,1], [-1,1,1], [1,-1,1], [1,1,-1],
+                           [-1,-1,1], [-1,1,-1], [1,-1,-1], [-1,-1,-1]]
+    for signs in sign_combinations:
         D = np.diag(signs)
         U = Uq @ D @ Up.T
-        P_transformed = P_centered @ U.T  # Apply rotation to N x 3 points
-        
+        P_transformed = P_centered @ U.T
         # Find nearest neighbors to establish correspondence
-        distances, indices = kdtree.query(P_transformed)
-        
+        distances, _ = kdtree.query(P_transformed)
+
         # Filter correspondences by distance threshold
         valid_mask = distances <= max_correspondence_distance
         inlier_count = np.sum(valid_mask)
         inlier_fraction = inlier_count / len(distances)
-        
         # Skip if too few valid correspondences
         if inlier_fraction < min_inlier_fraction:
             continue
-            
         # Compute error using only valid correspondences
         if inlier_count > 0:
             valid_distances = distances[valid_mask]
             error = np.sum(valid_distances**2)
-            
             # Prefer solutions with more inliers, then lower error
-            is_better = (inlier_count > best_inlier_count or 
+            is_better = (inlier_count > best_inlier_count or
                         (inlier_count == best_inlier_count and error < best_error))
-            
             if is_better:
                 best_error = error
                 best_transform = U

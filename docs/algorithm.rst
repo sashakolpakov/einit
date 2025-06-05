@@ -149,6 +149,8 @@ The algorithm accepts several parameters for robustness control:
 
 **leafsize**: KD-tree leaf size parameter affecting search performance (default 16). Smaller values may improve accuracy for small point clouds at the cost of build time.
 
+**positive_only**: When True, restricts the search to only proper rotations (determinant +1) by selecting sign combinations that preserve chirality (default False).
+
 8. Homogeneous Transformation Matrix
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

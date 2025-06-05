@@ -1,3 +1,0 @@
-numpy>=1.15
-opencv-python>=3.4
-pytest>=6.0

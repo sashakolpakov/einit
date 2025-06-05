@@ -102,21 +102,46 @@ retval, T_refined, inliers = cv2.estimateAffine3D(
 )
 ```
 
-## Testing
+## Examples and Testing
 
-Run the test suite:
+### Running Examples
+
+The `examples/` directory contains demonstrations and visualizations:
+
+**Permutation Invariance Demo:**
 ```bash
-pytest tests/ -v -s
+python examples/permutation_demo.py
 ```
+Shows that einit correctly handles randomly permuted point clouds.
 
-Visualize failure cases:
+**Interactive Jupyter Notebook:**
 ```bash
-cd tests && python visualize_failures.py
+jupyter notebook examples/visual_tests.ipynb
 ```
-
-More benchmarking results are contained in the Jupyter notebook. [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](
-  https://colab.research.google.com/github/sashakolpakov/einit/blob/main/tests/visual_tests.ipynb
+[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](
+  https://colab.research.google.com/github/sashakolpakov/einit/blob/main/examples/visual_tests.ipynb
 )
+
+**Failure Analysis:**
+```bash
+python examples/visualize_failures.py
+```
+Analyzes and visualizes challenging test cases.
+
+### Running Tests
+
+Run the comprehensive test suite:
+```bash
+# All tests
+pytest tests/ -v
+
+# Specific test categories  
+pytest tests/test_einit.py -v              # Core algorithm tests
+pytest tests/test_integration.py -v        # Integration tests
+
+# Test permutation invariance specifically
+pytest tests/test_einit.py::test_random_permutation_invariance -v
+```
 
 ## Documentation
 

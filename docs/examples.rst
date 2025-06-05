@@ -142,27 +142,59 @@ Visualization
    aligned = apply_transform(src, T_init)
    plot_alignment(src, dst, aligned)
 
-Failure Case Analysis
-~~~~~~~~~~~~~~~~~~~~~
+Running Examples and Tests
+--------------------------
 
-For debugging and analysis, a visualization utility is provided in the test suite:
+Examples Directory
+~~~~~~~~~~~~~~~~~~
+
+The ``examples/`` directory contains several demonstration scripts and notebooks:
+
+**Permutation Invariance Demo**
+
+Demonstrates that einit correctly handles randomly permuted point clouds:
 
 .. code-block:: bash
 
-   # Run failure visualization (requires matplotlib)
-   cd tests
-   python visualize_failures.py
+   python examples/permutation_demo.py
 
-This script analyzes the bunny test with configurable parameters and shows visualizations of the worst failure cases, including:
+This script shows that einit's ellipsoid-based approach is robust to point ordering changes in the destination cloud, achieving identical performance whether points are permuted or not.
+
+**Interactive Jupyter Notebook**
+
+For detailed exploration and visualization:
+
+.. code-block:: bash
+
+   # Launch Jupyter and open the notebook
+   jupyter notebook examples/visual_tests.ipynb
+
+The notebook includes:
+
+- Interactive visualizations of point cloud alignment
+- Step-by-step algorithm walkthrough  
+- Performance analysis with different geometric shapes
+- Comparison with other initialization methods
+
+**Failure Case Analysis**
+
+For debugging and troubleshooting:
+
+.. code-block:: bash
+
+   python examples/visualize_failures.py
+
+This utility analyzes algorithm performance on challenging test cases, showing:
 
 - Algorithm alignment results (aligned source vs. true target)
 - Point-wise error distributions with RMSE statistics
+- Identification of worst-case scenarios
 
 You can customize the analysis parameters:
 
 .. code-block:: python
 
-   from tests.visualize_failures import visualize_bunny_failures
+   from examples.visualize_failures import visualize_bunny_failures
    
    # Analyze with higher noise and lower overlap
    visualize_bunny_failures(
@@ -171,3 +203,30 @@ You can customize the analysis parameters:
        n_points=2000,           # Fewer points for speed
        show_worst=3             # Show top 3 failures
    )
+
+Running Tests
+~~~~~~~~~~~~~
+
+To verify the installation and run comprehensive tests:
+
+.. code-block:: bash
+
+   # Run all tests
+   python -m pytest tests/ -v
+   
+   # Run specific test categories
+   python -m pytest tests/test_einit.py -v              # Core algorithm tests
+   python -m pytest tests/test_integration.py -v        # Integration tests
+   
+   # Run the new permutation invariance test
+   python -m pytest tests/test_einit.py::test_random_permutation_invariance -v
+
+The test suite includes:
+
+- **Basic functionality tests**: Identity transforms, random data validation
+- **Statistical robustness tests**: Performance across 100+ random scenarios  
+- **Real-world data tests**: Stanford bunny mesh with noise and partial overlap
+- **Integration tests**: OpenCV compatibility and pipeline integration
+- **Permutation invariance test**: Validates algorithm works with randomly ordered points
+
+Test results provide detailed statistics including success rates, RMSE distributions, and performance benchmarks for different geometric shapes (spheres, cubes, complex meshes).

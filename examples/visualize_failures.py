@@ -12,12 +12,17 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from einit import ellipsoid_init_icp
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__)), 'tests'))
 from test_einit import download_stanford_bunny, apply_transform, random_rigid_transform
 
 def visualize_bunny_failures(noise_std=0.02, overlap_fraction=0.8, n_points=3000, show_worst=5):
     """Visualize the worst failure cases from bunny test"""
     print(f"Analyzing bunny test failures...")
     print(f"Parameters: {n_points} points, noise_std={noise_std}, overlap={overlap_fraction*100:.0f}%")
+    print(f"")
+    print(f"A test FAILS if :")
+    print(f"  - Transform error > 0.08 (||T_recovered - T_true||_F)")
+    print(f"  - OR Clean RMSE > 0.08 (alignment error on full point clouds)")
     
     # Load bunny
     src = download_stanford_bunny(n_points=n_points)
@@ -79,6 +84,20 @@ def visualize_bunny_failures(noise_std=0.02, overlap_fraction=0.8, n_points=3000
     for i, failure in enumerate(failures[:n_show]):
         print(f"\nFailure {i+1}:")
         print(f"  Seed: {failure['seed']}")
+        
+        # Determine reason for failure
+        transform_fails = failure['transform_error'] > 0.08
+        rmse_fails = failure['clean_rmse'] > 0.08
+        
+        if transform_fails and rmse_fails:
+            print(f"  FAILURE REASON: Both transform error AND RMSE exceed limits")
+        elif transform_fails:
+            print(f"  FAILURE REASON: Transform error exceeds limit")
+        elif rmse_fails:
+            print(f"  FAILURE REASON: RMSE exceeds limit")
+        else:
+            print(f"  ERROR: Should not be classified as failure")
+        
         print(f"  Transform error: {failure['transform_error']:.4f}")
         print(f"  Clean RMSE: {failure['clean_rmse']:.4f}")
         
@@ -108,7 +127,7 @@ def visualize_bunny_failures(noise_std=0.02, overlap_fraction=0.8, n_points=3000
         ax2.set_title('Error Distribution')
         ax2.legend()
         
-        plt.suptitle(f'Failure Case {i+1}: Transform Error = {failure["transform_error"]:.4f}', 
+        plt.suptitle(f'Failure Case {i+1}: Transform Error = {failure["transform_error"]:.4f}, Clean RMSE = {failure["clean_rmse"]:.4f}', 
                     fontsize=16)
         plt.tight_layout()
         plt.show()

@@ -87,22 +87,37 @@ def opencv_icp_refinement(src, dst, T_init, max_iterations=10):
     
     return T_current, rmse_history
 
-def visualize_bunny_failures(noise_std=0.02, overlap_fraction=0.8, n_points=3000, show_worst=3):
-    """Visualize the worst failure cases from bunny test with KD-tree einit, permutations, and OpenCV refinement"""
-    print(f"Analyzing bunny test failures with KD-tree einit, permutations, and OpenCV refinement...")
+def bbox_overlap_analysis(noise_std=0.02, overlap_fraction=0.8, n_points=3000, show_worst=3, n_trials=100):
+    """Analyze EINIT performance under bounding box spatial overlap model with detailed statistics"""
+    print(f"EINIT Performance Analysis: Bounding Box Spatial Overlap Model")
+    print(f"=" * 80)
     print(f"Parameters: {n_points} points, noise_std={noise_std}, overlap={overlap_fraction*100:.0f}%")
+    print(f"Trials: {n_trials}")
     print(f"")
-    print(f"A test FAILS if :")
+    print(f"Test uses spatial bounding box overlap ...")
+    print(f"with random permutations to test robustness")
+    print(f"")
+    print(f"FAILURE CRITERIA:")
     print(f"  - Transform error > 0.08 (||T_recovered - T_true||_F)")
     print(f"  - OR Clean RMSE > 0.08 (alignment error on full point clouds)")
+    print(f"")
     
     # Load bunny
     src = download_stanford_bunny(n_points=n_points)
     
+    # Collect comprehensive statistics
+    all_results = []
     failures = []
     
-    # Run test cases and collect failures
-    for i in range(100):
+    transform_errors = []
+    clean_rmses = []
+    overlap_rmses = []
+    overlap_sizes_src = []
+    overlap_sizes_dst = []
+    fallback_count = 0
+    
+    # Run test cases and collect statistics
+    for i in range(n_trials):
         np.random.seed(1000 + i)
         
         T_true = random_rigid_transform()
@@ -110,22 +125,24 @@ def visualize_bunny_failures(noise_std=0.02, overlap_fraction=0.8, n_points=3000
         noise = np.random.normal(scale=noise_std, size=dst.shape)
         dst_noisy = dst + noise
         
-        # Create SPATIAL partial overlap (not random sampling)
+        # Create spatial partial overlap (different from random subsampling)
         # Method: Create two overlapping bounding boxes to simulate real partial overlap
         
         # Get source bounding box
         src_min, src_max = np.min(src, axis=0), np.max(src, axis=0)
         src_range = src_max - src_min
         
-        # Create offset overlap regions 
-        # Source region: slightly shifted bounding box
+        # Create offset overlap regions in source coordinate system
         offset = src_range * (1 - overlap_fraction) * 0.5  # Shift to create overlap_fraction overlap
         src_box_min = src_min + offset * np.random.uniform(-1, 1, 3)  # Random direction
-        src_box_max = src_box_min + src_range * overlap_fraction / 0.8  # Ensure good coverage
+        src_box_max = src_box_min + src_range * overlap_fraction
         
-        # Destination region: overlapping box
-        dst_box_min = src_box_min - offset * 0.3  # Overlap with source box
-        dst_box_max = dst_box_min + src_range * overlap_fraction / 0.8
+        # For destination, use corresponding box in destination coordinate system
+        # Transform the source bounding box to destination space
+        dst_min, dst_max = np.min(dst_noisy, axis=0), np.max(dst_noisy, axis=0)
+        dst_range = dst_max - dst_min
+        dst_box_min = dst_min + offset * np.random.uniform(-1, 1, 3)
+        dst_box_max = dst_box_min + dst_range * overlap_fraction
         
         # Select points within each bounding box
         src_mask = np.all((src >= src_box_min) & (src <= src_box_max), axis=1)
@@ -134,9 +151,20 @@ def visualize_bunny_failures(noise_std=0.02, overlap_fraction=0.8, n_points=3000
         src_o = src[src_mask]
         dst_o = dst_noisy[dst_mask]
         
+        # Track overlap statistics
+        bbox_src_size = len(src_o)
+        bbox_dst_size = len(dst_o)
+        used_fallback = False
+        
+        # Debug: print bbox sizes for first few trials
+        if i < 5:
+            print(f"Trial {i}: bbox src={bbox_src_size}, dst={bbox_dst_size}")
+        
         # Ensure we have enough points
         if len(src_o) < 50 or len(dst_o) < 50:
             # Fallback: use random sampling if spatial method fails
+            fallback_count += 1
+            used_fallback = True
             n_src = max(50, int(len(src) * overlap_fraction))
             n_dst = max(50, int(len(dst_noisy) * overlap_fraction))
             src_indices = np.random.choice(len(src), n_src, replace=False)
@@ -165,6 +193,29 @@ def visualize_bunny_failures(noise_std=0.02, overlap_fraction=0.8, n_points=3000
         kdtree_true = cKDTree(dst_o_true)
         distances, _ = kdtree_true.query(src_o_aligned)
         overlap_rmse = np.sqrt(np.mean(distances**2))
+        
+        # Store all results for comprehensive statistics
+        result = {
+            'seed': 1000 + i,
+            'transform_error': transform_error,
+            'clean_rmse': clean_rmse,
+            'overlap_rmse': overlap_rmse,
+            'src_overlap_size': len(src_o),
+            'dst_overlap_size': len(dst_o_permuted),
+            'bbox_src_size': bbox_src_size,
+            'bbox_dst_size': bbox_dst_size,
+            'used_fallback': used_fallback,
+            'T_true': T_true,
+            'T_recovered': T_recovered
+        }
+        all_results.append(result)
+        
+        # Collect statistics
+        transform_errors.append(transform_error)
+        clean_rmses.append(clean_rmse)
+        overlap_rmses.append(overlap_rmse)
+        overlap_sizes_src.append(len(src_o))
+        overlap_sizes_dst.append(len(dst_o_permuted))
         
         # Store failure cases with OpenCV ICP refinement (use clean RMSE for failure detection)
         if transform_error > 0.08 or clean_rmse > 0.08:
@@ -204,11 +255,70 @@ def visualize_bunny_failures(noise_std=0.02, overlap_fraction=0.8, n_points=3000
                 'permutation_applied': True
             })
     
-    print(f"Found {len(failures)} failure cases out of 100 runs")
+    # Print comprehensive statistics
+    print(f"BBOX OVERLAP ANALYSIS RESULTS")
+    print(f"=" * 80)
+    print(f"Total trials: {n_trials}")
+    print(f"Failures: {len(failures)} ({len(failures)/n_trials*100:.1f}%)")
+    print(f"Success rate: {(n_trials-len(failures))/n_trials*100:.1f}%")
+    print(f"")
+    
+    # Overlap statistics
+    print(f"SPATIAL OVERLAP STATISTICS:")
+    print(f"  Fallback to random sampling: {fallback_count}/{n_trials} ({fallback_count/n_trials*100:.1f}%)")
+    print(f"  Source overlap sizes: {np.mean(overlap_sizes_src):.0f} ± {np.std(overlap_sizes_src):.0f} points")
+    print(f"  Dest overlap sizes: {np.mean(overlap_sizes_dst):.0f} ± {np.std(overlap_sizes_dst):.0f} points")
+    print(f"  Min overlap sizes: src={np.min(overlap_sizes_src)}, dst={np.min(overlap_sizes_dst)}")
+    print(f"  Max overlap sizes: src={np.max(overlap_sizes_src)}, dst={np.max(overlap_sizes_dst)}")
+    print(f"")
+    
+    # Performance statistics
+    print(f"PERFORMANCE STATISTICS:")
+    print(f"  Transform error: {np.mean(transform_errors):.4f} ± {np.std(transform_errors):.4f}")
+    print(f"    Range: [{np.min(transform_errors):.4f}, {np.max(transform_errors):.4f}]")
+    print(f"    Median: {np.median(transform_errors):.4f}")
+    print(f"    95th percentile: {np.percentile(transform_errors, 95):.4f}")
+    print(f"")
+    print(f"  Clean RMSE: {np.mean(clean_rmses):.4f} ± {np.std(clean_rmses):.4f}")
+    print(f"    Range: [{np.min(clean_rmses):.4f}, {np.max(clean_rmses):.4f}]")
+    print(f"    Median: {np.median(clean_rmses):.4f}")
+    print(f"    95th percentile: {np.percentile(clean_rmses, 95):.4f}")
+    print(f"")
+    print(f"  Overlap RMSE: {np.mean(overlap_rmses):.4f} ± {np.std(overlap_rmses):.4f}")
+    print(f"    Range: [{np.min(overlap_rmses):.4f}, {np.max(overlap_rmses):.4f}]")
+    print(f"    Median: {np.median(overlap_rmses):.4f}")
+    print(f"    95th percentile: {np.percentile(overlap_rmses, 95):.4f}")
+    print(f"")
+    
+    # Failure analysis
+    print(f"FAILURE BREAKDOWN:")
+    transform_only_fails = sum(1 for r in all_results if r['transform_error'] > 0.08 and r['clean_rmse'] <= 0.08)
+    clean_only_fails = sum(1 for r in all_results if r['transform_error'] <= 0.08 and r['clean_rmse'] > 0.08)
+    both_fail = sum(1 for r in all_results if r['transform_error'] > 0.08 and r['clean_rmse'] > 0.08)
+    
+    print(f"  Transform error only: {transform_only_fails} ({transform_only_fails/n_trials*100:.1f}%)")
+    print(f"  Clean RMSE only: {clean_only_fails} ({clean_only_fails/n_trials*100:.1f}%)")
+    print(f"  Both criteria: {both_fail} ({both_fail/n_trials*100:.1f}%)")
+    print(f"")
+    
+    # Correlation analysis
+    print(f"CORRELATION ANALYSIS:")
+    corr_transform_clean = np.corrcoef(transform_errors, clean_rmses)[0,1]
+    corr_transform_overlap = np.corrcoef(transform_errors, overlap_rmses)[0,1]
+    corr_clean_overlap = np.corrcoef(clean_rmses, overlap_rmses)[0,1]
+    
+    print(f"  Transform error vs Clean RMSE: {corr_transform_clean:.3f}")
+    print(f"  Transform error vs Overlap RMSE: {corr_transform_overlap:.3f}")
+    print(f"  Clean RMSE vs Overlap RMSE: {corr_clean_overlap:.3f}")
+    print(f"")
     
     if len(failures) == 0:
         print("No failures found!")
         return
+        
+    print(f"DETAILED FAILURE ANALYSIS:")
+    print(f"Showing {min(show_worst, len(failures))} worst failures...")
+    print(f"")
     
     # Sort by worst error and show top failures
     failures.sort(key=lambda x: x['transform_error'], reverse=True)
@@ -375,4 +485,4 @@ def visualize_bunny_failures(noise_std=0.02, overlap_fraction=0.8, n_points=3000
 
 
 if __name__ == "__main__":
-    visualize_bunny_failures()
+    bbox_overlap_analysis()

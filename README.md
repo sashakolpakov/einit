@@ -119,12 +119,6 @@ retval, T_refined, inliers = cv2.estimateAffine3D(
 
 The `examples/` directory contains demonstrations and visualizations:
 
-**Permutation Invariance Demo:**
-```bash
-python examples/permutation_demo.py
-```
-Shows that einit correctly handles randomly permuted point clouds.
-
 **Interactive Jupyter Notebook:**
 ```bash
 jupyter notebook examples/visual_tests.ipynb
@@ -132,27 +126,45 @@ jupyter notebook examples/visual_tests.ipynb
 [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](
   https://colab.research.google.com/github/sashakolpakov/einit/blob/main/examples/visual_tests.ipynb
 )
+Comprehensive visual demonstrations including sphere, cube, and Stanford bunny alignments with performance analysis.
 
-**Failure Analysis:**
+**Permutation Invariance Test:**
 ```bash
-python examples/visualize_failures.py
+python examples/point_reoder_test.py
 ```
-Analyzes and visualizes challenging test cases.
+Demonstrates that einit correctly handles randomly permuted point clouds.
+
+**Partial Overlap Test:**
+```bash
+python examples/rand_overlap_test.py
+```
+Tests algorithm robustness with realistic partial overlap scenarios using Stanford bunny data.
+
+**Bounding Box Overlap Test:**
+```bash
+python examples/bbox_overlap_test.py
+```
+Evaluates performance with geometric bounding box constraints.
 
 ### Running Tests
 
-Run the comprehensive test suite:
+The `tests/` directory contains comprehensive test suites validating core functionality:
+
 ```bash
 # All tests
 pytest tests/ -v
 
 # Specific test categories  
 pytest tests/test_einit.py -v              # Core algorithm tests
-pytest tests/test_integration.py -v        # Integration tests
+pytest tests/test_integration.py -v        # Integration and robustness tests
 
 # Test permutation invariance specifically
 pytest tests/test_einit.py::test_random_permutation_invariance -v
 ```
+
+**Test Coverage:**
+- **Core Algorithm Tests** (`test_einit.py`): Basic functionality, permutation invariance, noise robustness, and Stanford bunny dataset validation
+- **Integration Tests** (`test_integration.py`): End-to-end pipeline testing with real-world scenarios
 
 ## Documentation
 

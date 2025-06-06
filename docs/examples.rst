@@ -150,59 +150,47 @@ Examples Directory
 
 The ``examples/`` directory contains several demonstration scripts and notebooks:
 
-**Permutation Invariance Demo**
-
-Demonstrates that einit correctly handles randomly permuted point clouds:
-
-.. code-block:: bash
-
-   python examples/permutation_demo.py
-
-This script shows that einit's ellipsoid-based approach is robust to point ordering changes in the destination cloud, achieving identical performance whether points are permuted or not.
-
 **Interactive Jupyter Notebook**
 
-For detailed exploration and visualization:
+Comprehensive visual demonstrations including sphere, cube, and Stanford bunny alignments with performance analysis:
 
 .. code-block:: bash
 
    # Launch Jupyter and open the notebook
    jupyter notebook examples/visual_tests.ipynb
 
+**Permutation Invariance Test**
+
+Demonstrates that einit correctly handles randomly permuted point clouds:
+
+.. code-block:: bash
+
+   python examples/point_reoder_test.py
+
+This script shows that einit's ellipsoid-based approach is robust to point ordering changes in the destination cloud, achieving identical performance whether points are permuted or not.
+
+**Partial Overlap Test**
+
+Tests algorithm robustness with realistic partial overlap scenarios using Stanford bunny data:
+
+.. code-block:: bash
+
+   python examples/rand_overlap_test.py
+
+**Bounding Box Overlap Test**
+
+Evaluates performance with geometric bounding box constraints:
+
+.. code-block:: bash
+
+   python examples/bbox_overlap_test.py
+
 The notebook includes:
 
 - Interactive visualizations of point cloud alignment
 - Step-by-step algorithm walkthrough  
-- Performance analysis with different geometric shapes
-- Comparison with other initialization methods
-
-**Failure Case Analysis**
-
-For debugging and troubleshooting:
-
-.. code-block:: bash
-
-   python examples/visualize_failures.py
-
-This utility analyzes algorithm performance on challenging test cases, showing:
-
-- Algorithm alignment results (aligned source vs. true target)
-- Point-wise error distributions with RMSE statistics
-- Identification of worst-case scenarios
-
-You can customize the analysis parameters:
-
-.. code-block:: python
-
-   from examples.visualize_failures import visualize_bunny_failures
-   
-   # Analyze with higher noise and lower overlap
-   visualize_bunny_failures(
-       noise_std=0.05,           # Higher noise level
-       overlap_fraction=0.6,     # Lower overlap (60%)
-       n_points=2000,           # Fewer points for speed
-       show_worst=3             # Show top 3 failures
-   )
+- Performance analysis with different geometric shapes (spheres, cubes, Stanford bunny)
+- Timing benchmarks and noise robustness analysis
 
 Running Tests
 ~~~~~~~~~~~~~
@@ -223,10 +211,7 @@ To verify the installation and run comprehensive tests:
 
 The test suite includes:
 
-- **Basic functionality tests**: Identity transforms, random data validation
-- **Statistical robustness tests**: Performance across 100+ random scenarios  
-- **Real-world data tests**: Stanford bunny mesh with noise and partial overlap
-- **Integration tests**: OpenCV compatibility and pipeline integration
-- **Permutation invariance test**: Validates algorithm works with randomly ordered points
+- **Core algorithm tests** (``test_einit.py``): Basic functionality, identical point clouds, statistical analysis on synthetic shapes (spheres), and Stanford bunny dataset validation with noise and partial overlap
+- **Integration tests** (``test_integration.py``): End-to-end pipeline testing with real-world scenarios
 
-Test results provide detailed statistics including success rates, RMSE distributions, and performance benchmarks for different geometric shapes (spheres, cubes, complex meshes).
+Test results provide detailed statistics including success rates, RMSE distributions, and performance benchmarks for different geometric shapes.

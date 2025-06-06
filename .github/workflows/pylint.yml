@@ -26,8 +26,8 @@ jobs:
     
     - name: Lint with pylint
       run: |
-        # Run pylint with reasonable settings
-        pylint einit --disable=C0103,R0903,R0913,R0914,W0613,C0114,C0115,C0116 --max-line-length=88
+        # Run pylint with configuration file
+        pylint einit --rcfile=pylint.rc
 
   test:
     runs-on: ubuntu-latest

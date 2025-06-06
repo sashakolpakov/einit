@@ -14,13 +14,13 @@
 
 ## Key Features
 
-- ⚡ **Fast**: < 1ms for 1000 points
-- 🎯 **Accurate**: Often achieves excellent alignment without iterative refinement
-- 🔧 **OpenCV compatible**: Returns standard 4×4 transformation matrices  
-- 🛡️ **Robust**: Handles noise, partial overlap, and permuted point clouds
-- 🔄 **Permutation invariant**: Results are identical regardless of point ordering
-- 🎛️ **Configurable**: Adjustable parameters for different use cases
-- 🐍 **Simple API**: One function call to get results
+- **Fast**: < 1ms for 1000 points
+- **Accurate**: Often achieves excellent alignment without iterative refinement
+- **OpenCV compatible**: Returns standard 4×4 transformation matrices  
+- **Robust**: Handles noise, partial overlap, and permuted point clouds
+- **Permutation invariant**: Results are identical regardless of point ordering
+- **Configurable**: Adjustable parameters for different use cases
+- **Simple API**: One function call to get results
 
 ## Quick Start
 

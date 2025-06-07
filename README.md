@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/logo.png" alt="einit logo" height="320"/>
+  <img src="docs/einit.png" alt="einit logo" height="320"/>
 </p>
 
 <h1 align="center">Fast and Robust ICP Initialization</h1>

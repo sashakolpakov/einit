@@ -1,13 +1,30 @@
-# einit: Fast and Robust ICP Initialization
+<p align="center">
+  <img src="docs/logo.png" alt="einit logo" height="320"/>
+</p>
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.6+](https://img.shields.io/badge/python-3.6+-blue.svg)](https://www.python.org/downloads/)
-[![PyPI](https://img.shields.io/pypi/v/einit.svg)](https://pypi.org/project/einit/)
+<h1 align="center">Fast and Robust ICP Initialization</h1>
 
-<!-- CI status from GitHub Actions -->
-[![CI](https://img.shields.io/github/actions/workflow/status/sashakolpakov/einit/pylint.yml?branch=main&label=CI&logo=github)](https://github.com/sashakolpakov/einit/actions/workflows/pylint.yml) <!-- Docs status from GitHub Actions -->
-[![Docs](https://img.shields.io/github/actions/workflow/status/sashakolpakov/einit/deploy_docs.yml?branch=main&label=Docs&logo=github)](https://github.com/sashakolpakov/einit/actions/workflows/deploy_docs.yml) <!-- Docs health via HTTP ping -->
-[![Docs](https://img.shields.io/website-up-down-green-red/https/sashakolpakov.github.io/einit?label=API%20Documentation)](https://sashakolpakov.github.io/einit/)
+<p align="center">
+  <a href="https://opensource.org/licenses/MIT">
+    <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"/>
+  </a>
+  <a href="https://www.python.org/downloads/">
+    <img src="https://img.shields.io/badge/python-3.6+-blue.svg" alt="Python 3.6+"/>
+  </a>
+  <a href="https://pypi.org/project/einit/">
+    <img src="https://img.shields.io/pypi/v/einit.svg" alt="PyPI"/>
+  </a>
+  <a href="https://github.com/sashakolpakov/einit/actions/workflows/pylint.yml">
+    <img src="https://img.shields.io/github/actions/workflow/status/sashakolpakov/einit/pylint.yml?branch=main&label=CI&logo=github" alt="CI"/>
+  </a>
+  <a href="https://github.com/sashakolpakov/einit/actions/workflows/deploy_docs.yml">
+    <img src="https://img.shields.io/github/actions/workflow/status/sashakolpakov/einit/deploy_docs.yml?branch=main&label=Docs&logo=github" alt="Docs"/>
+  </a>
+  <a href="https://sashakolpakov.github.io/einit/">
+    <img src="https://img.shields.io/website-up-down-green-red/https/sashakolpakov.github.io/einit?label=API%20Documentation" alt="Docs Status"/>
+  </a>
+</p>
+
 
 
 **einit** provides fast and robust initialization for 3D point cloud alignment using ellipsoid analysis. It computes initial transformations by analyzing the ellipsoids of inertia of point clouds and uses KD-tree correspondence recovery for robustness to real-world scenarios.
@@ -138,13 +155,16 @@ Demonstrates that einit correctly handles randomly permuted point clouds.
 ```bash
 python examples/rand_overlap_test.py
 ```
-Tests algorithm robustness with realistic partial overlap scenarios using Stanford bunny data.
+Tests algorithm robustness with randomized partial overlap scenarios using the Stanford bunny.
 
 **Bounding Box Overlap Test:**
 ```bash
 python examples/bbox_overlap_test.py
 ```
-Evaluates performance with geometric bounding box constraints.
+Evaluates performance on the Stanford bunny with geometric bounding box constraints.
+
+> **Note**: Unlike randomized overlaps, this is a known failure mode of the algorithm. Low success rate is expected. 
+
 
 ### Running Tests
 

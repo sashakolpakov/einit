@@ -23,7 +23,9 @@ The algorithm begins by validating that both input point clouds are (N, 3) array
 .. code-block:: python
 
    if src_points.ndim != 2 or src_points.shape[1] != 3:
-       raise ValueError("src_points and dst_points must both be (:,3) arrays")
+       raise ValueError("src_points must be (N,3) array")
+   if dst_points.ndim != 2 or dst_points.shape[1] != 3:
+       raise ValueError("dst_points must be (N,3) array")
 
 This ensures that the inputs are properly formatted 3D point clouds with the same number of points.
 
@@ -98,7 +100,7 @@ For each combination of signs :math:`s_1, s_2, s_3 \in \{-1, +1\}`, we construct
 And compute the corresponding rotation matrix:
 
 .. math::
-   R = U_Q U_P^T D U_P U_P^T = U_Q D U_P^T
+   R = U_Q D U_P^T
 
 The implementation uses a KD-tree to find nearest neighbor correspondences for each candidate transformation:
 
@@ -112,7 +114,8 @@ The implementation uses a KD-tree to find nearest neighbor correspondences for e
    
    for signs in [[1,1,1], [-1,1,1], [1,-1,1], [1,1,-1],
                  [-1,-1,1], [-1,1,-1], [1,-1,-1], [-1,-1,-1]]:
-       U = U0 @ Up @ np.diag(signs) @ Up.T
+       D = np.diag(signs)
+       U = Uq @ D @ Up.T
        P_transformed = P_centered @ U.T
        
        # Find nearest neighbors to establish correspondence

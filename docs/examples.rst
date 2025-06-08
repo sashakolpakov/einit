@@ -167,7 +167,7 @@ Demonstrates that einit correctly handles randomly permuted point clouds:
 
    python examples/point_reoder_test.py
 
-This script shows that einit's ellipsoid-based approach is robust to point ordering changes in the destination cloud, achieving identical performance whether points are permuted or not.
+This script shows that einit's ellipsoid-based approach is robust to point ordering changes, achieving identical performance whether points are permuted or not.
 
 **Partial Overlap Test**
 

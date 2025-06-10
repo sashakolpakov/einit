@@ -50,5 +50,5 @@ jobs:
     
     - name: Test with pytest
       run: |
-        pytest tests/test_einit.py -v
-        pytest tests/test_integration.py -v
+        pytest einit_tests/test_einit.py -v
+        pytest einit_tests/test_integration.py -v

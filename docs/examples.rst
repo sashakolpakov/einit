@@ -200,18 +200,21 @@ To verify the installation and run comprehensive tests:
 .. code-block:: bash
 
    # Run all tests
-   python -m pytest tests/ -v
+   python -m pytest einit_tests/ -v
    
    # Run specific test categories
-   python -m pytest tests/test_einit.py -v              # Core algorithm tests
-   python -m pytest tests/test_integration.py -v        # Integration tests
+   python -m pytest einit_tests/test_einit.py -v              # Core algorithm tests
+   python -m pytest einit_tests/test_integration.py -v        # Stanford bunny integration test
    
-   # Run the new permutation invariance test
-   python -m pytest tests/test_einit.py::test_random_permutation_invariance -v
+   # Run individual test functions
+   python -m pytest einit_tests/test_einit.py::test_basic_functionality -v
+   python -m pytest einit_tests/test_einit.py::test_identity_transform -v
+   python -m pytest einit_tests/test_einit.py::test_synthetic_shapes_statistical -v
+   python -m pytest einit_tests/test_einit.py::test_bunny_cloud_statistical -v
 
 The test suite includes:
 
-- **Core algorithm tests** (``test_einit.py``): Basic functionality, identical point clouds, statistical analysis on synthetic shapes (spheres), and Stanford bunny dataset validation with noise and partial overlap
-- **Integration tests** (``test_integration.py``): End-to-end pipeline testing with real-world scenarios
+- **Core algorithm tests** (``test_einit.py``): Basic functionality, identity transforms, statistical analysis on synthetic shapes (spheres and cube surfaces), and Stanford bunny dataset validation using NREL data
+- **Integration tests** (``test_integration.py``): Stanford bunny alignment test using the original PLY dataset with partial overlap, noise, and performance benchmarking
 
-Test results provide detailed statistics including success rates, RMSE distributions, and performance benchmarks for different geometric shapes.
+Test results provide detailed statistics including success rates, RMSE distributions, transform errors, and performance timing for different geometric shapes and real-world data.

@@ -269,12 +269,13 @@ def run_ab_test_spheres():
     for i in range(n_trials):
         np.random.seed(5000 + i)
         
-        # Generate sphere
+        # Generate proper unit sphere (like your working example)
         n_points = 1000
-        phi = np.random.uniform(0, np.pi, n_points)
-        theta = np.random.uniform(0, 2*np.pi, n_points)
-        src_clean = np.vstack([np.sin(phi)*np.cos(theta), np.sin(phi)*np.sin(theta), np.cos(phi)]).T
-        src_clean *= np.random.uniform(3, 7, size=(n_points,1))
+        src_clean = np.random.randn(n_points, 3)
+        src_clean = src_clean / np.linalg.norm(src_clean, axis=1, keepdims=True)
+        # Scale uniformly to create a sphere of random radius
+        radius = np.random.uniform(3, 7)
+        src_clean *= radius
         
         # Create test data with overlap, noise, and permutation
         src_partial, dst_partial, T_true, src_clean, dst_clean = create_test_data(

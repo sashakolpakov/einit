@@ -38,34 +38,11 @@ def random_reflection_transform():
 
 
 def download_stanford_bunny(n_points=50000):
-    """Download the Stanford Bunny mesh, extract vertices, sample n_points."""
-    url = 'http://graphics.stanford.edu/pub/3Dscanrep/bunny.tar.gz'
+    """Download the Stanford Bunny point cloud from NREL dataset."""
+    url = 'https://data.nrel.gov/system/files/153/bunny.csv'
     with urllib.request.urlopen(url) as resp:
-        data = resp.read()
-    tf = tarfile.open(fileobj=io.BytesIO(data), mode='r:gz')
-    ply_member = None
-    for m in tf.getmembers():
-        if m.name.endswith('bun_zipper.ply'):
-            ply_member = m
-            break
-    if ply_member is None:
-        raise RuntimeError('Bunny PLY not found in archive')
-    f = tf.extractfile(ply_member)
-    
-    # Parse PLY - format is: x y z confidence intensity
-    header_ended = False
-    verts = []
-    for line in f:
-        line = line.decode('utf-8').strip()
-        if header_ended:
-            parts = line.split()
-            if len(parts) >= 5:  # Ensure we have all 5 values
-                x, y, z = float(parts[0]), float(parts[1]), float(parts[2])
-                verts.append([x, y, z])
-        elif line == 'end_header':
-            header_ended = True
-    
-    pts = np.array(verts)
+        bunny = np.loadtxt(resp, delimiter=',')
+    pts = bunny[:, :3]  # only x,y,z columns
     
     # Random sample if too many points
     if pts.shape[0] > n_points:
@@ -91,10 +68,15 @@ def test_identity_transform():
     np.testing.assert_allclose(T, np.eye(4), atol=1e-10)
 
 
-def test_synthetic_shapes_statistical(noise_std=0.02, overlap_fraction=0.8, n_points=1000):
-    """Test synthetic shapes with statistical analysis over multiple runs."""
+def test_synthetic_shapes_statistical(noise_std=0.02, n_points=1000):
+    """Test synthetic shapes with statistical analysis over multiple runs.
+    
+    Args:
+        noise_std: Standard deviation of Gaussian noise to add to target points
+        n_points: Number of points to generate for sphere test
+    """
     print(f"\n=== SPHERE STATISTICAL TEST (100 runs) ===")
-    print(f"Test parameters: {n_points} points, noise_std={noise_std}, overlap={overlap_fraction*100:.0f}%")
+    print(f"Test parameters: {n_points} points, noise_std={noise_std}")
     
     sphere_transform_errors = []
     sphere_clean_rmses = []
@@ -113,15 +95,12 @@ def test_synthetic_shapes_statistical(noise_std=0.02, overlap_fraction=0.8, n_po
         dst_full = apply_transform(src_sphere, T_true)
         noise = np.random.normal(scale=noise_std, size=dst_full.shape)
         dst_noisy = dst_full + noise
-        mask = np.random.choice([True, False], size=(n_points,), p=[overlap_fraction, 1-overlap_fraction])
-        src_o = src_sphere[mask]
-        dst_o = dst_noisy[mask]
-
-        min_points = min(len(src_o), len(dst_o))
-        src_o = src_o[:min_points]
-        dst_o = dst_o[:min_points]
         
-        T_recovered = register_ellipsoid(src_o, dst_o)
+        # Use 80% of points for overlap
+        n_overlap = int(0.8 * n_points)
+        indices = np.random.choice(n_points, n_overlap, replace=False)
+        
+        T_recovered = register_ellipsoid(src_sphere[indices], dst_noisy[indices])
         
         transform_error = np.linalg.norm(T_recovered - T_true, ord='fro')
         
@@ -140,7 +119,7 @@ def test_synthetic_shapes_statistical(noise_std=0.02, overlap_fraction=0.8, n_po
     print(f"Sphere clean RMSE - Mean: {np.mean(sphere_clean_rmses):.4f}, Std: {np.std(sphere_clean_rmses):.4f}")
     
     print(f"\n=== CUBE STATISTICAL TEST (100 runs) ===")
-    print(f"Test parameters: {12**3} points, noise_std={noise_std}, overlap={overlap_fraction*100:.0f}%")
+    print(f"Test parameters: cube surface points (15x15 grid per face), noise_std={noise_std}")
     
     cube_transform_errors = []
     cube_clean_rmses = []
@@ -149,24 +128,28 @@ def test_synthetic_shapes_statistical(noise_std=0.02, overlap_fraction=0.8, n_po
     for i in range(100):
         np.random.seed(3000 + i)
         
-        # Generate cube
-        grid = np.linspace(-1,1,12)
-        X, Y, Z = np.meshgrid(grid, grid, grid)
-        src_cube = np.vstack([X.ravel(), Y.ravel(), Z.ravel()]).T * np.array([2,1,0.5])
+        # Generate cube surface points 
+        grid = np.linspace(-1, 1, 15)
+        face = np.array(np.meshgrid(grid, grid)).reshape(2, -1).T
+        
+        faces = []
+        for fixed_axis in range(3):
+            for fixed_value in [-1, 1]:
+                points = np.insert(face, fixed_axis, fixed_value, axis=1)
+                faces.append(points)
+        src_cube = np.vstack(faces) * np.array([2,1,0.5])
         
         T_true = random_reflection_transform()
         dst_full = apply_transform(src_cube, T_true)
         noise = np.random.normal(scale=noise_std, size=dst_full.shape)
         dst_noisy = dst_full + noise
-        mask = np.random.choice([True, False], size=(src_cube.shape[0],), p=[overlap_fraction, 1-overlap_fraction])
-        src_o = src_cube[mask]
-        dst_o = dst_noisy[mask]
-
-        min_points = min(len(src_o), len(dst_o))
-        src_o = src_o[:min_points]
-        dst_o = dst_o[:min_points]
         
-        T_recovered = register_ellipsoid(src_o, dst_o)
+        # Use 80% of points for overlap
+        n_cube_points = src_cube.shape[0]
+        n_overlap = int(0.8 * n_cube_points)
+        indices = np.random.choice(n_cube_points, n_overlap, replace=False)
+        
+        T_recovered = register_ellipsoid(src_cube[indices], dst_noisy[indices])
         
         transform_error = np.linalg.norm(T_recovered - T_true, ord='fro')
         
@@ -191,10 +174,15 @@ def test_synthetic_shapes_statistical(noise_std=0.02, overlap_fraction=0.8, n_po
     assert np.mean(cube_transform_errors) < 0.05, f"Mean cube transform error too high"
 
 
-def test_bunny_cloud_statistical(noise_std=0.02, overlap_fraction=0.8, n_points=3000):
-    """Test bunny with statistical analysis over multiple runs."""
+def test_bunny_cloud_statistical(noise_std=0.02, n_points=1500):
+    """Test bunny with statistical analysis over multiple runs.
+    
+    Args:
+        noise_std: Standard deviation of Gaussian noise to add to target points
+        n_points: Number of points to downsample from Stanford bunny
+    """
     print(f"\n=== BUNNY STATISTICAL TEST (100 runs) ===")
-    print(f"Test parameters: {n_points} points, noise_std={noise_std}, overlap={overlap_fraction*100:.0f}%")
+    print(f"Test parameters: {n_points} points, noise_std={noise_std}")
     
     # Load bunny once
     src = download_stanford_bunny(n_points=n_points)
@@ -204,21 +192,19 @@ def test_bunny_cloud_statistical(noise_std=0.02, overlap_fraction=0.8, n_points=
     successes = 0
     
     for i in range(100):
-        np.random.seed(1000 + i)  # Different seed each time
+        np.random.seed(1000 + i)
         
         T_true = random_rigid_transform()
-        dst = apply_transform(src, T_true)
-        noise = np.random.normal(scale=noise_std, size=dst.shape)
-        dst_noisy = dst + noise
-        mask = np.random.choice([True, False], size=(src.shape[0],), p=[overlap_fraction, 1-overlap_fraction])
-        src_o = src[mask]
-        dst_o = dst_noisy[mask]
-
-        min_points = min(len(src_o), len(dst_o))
-        src_o = src_o[:min_points]
-        dst_o = dst_o[:min_points]
+        dst_full = apply_transform(src, T_true)
+        noise = np.random.normal(scale=noise_std, size=dst_full.shape)
+        dst_noisy = dst_full + noise
         
-        T_recovered = register_ellipsoid(src_o, dst_o)
+        # Use 80% of points for overlap
+        n_src_points = src.shape[0]
+        n_overlap = int(0.8 * n_src_points)
+        indices = np.random.choice(n_src_points, n_overlap, replace=False)
+        
+        T_recovered = register_ellipsoid(src[indices], dst_noisy[indices])
         
         # Compute errors
         transform_error = np.linalg.norm(T_recovered - T_true, ord='fro')

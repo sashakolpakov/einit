@@ -102,7 +102,7 @@ Real-world performance on test datasets:
 | Cube    | 3375   | 0.02  | 0.010 ± 0.008 ms |
 | Bunny   | 992    | 0.02  | 0.047 ± 0.021 ms |
 
-*With 0.01-0.02 standard Gaussian noise and ~ 80% overlap*
+*With 0.01-0.02 standard Gaussian noise and partial overlap*
 
 ## Algorithm
 
@@ -171,23 +171,20 @@ Evaluates performance on the Stanford bunny with geometric bounding box constrai
 
 ### Running Tests
 
-The `tests/` directory contains comprehensive test suites validating core functionality:
-
 ```bash
 # All tests
-pytest tests/ -v
+pytest einit_tests/ -v
 
-# Specific test categories  
-pytest tests/test_einit.py -v              # Core algorithm tests
-pytest tests/test_integration.py -v        # Integration and robustness tests
+# Core algorithm tests  
+pytest einit_tests/test_einit.py -v
 
-# Test permutation invariance specifically
-pytest tests/test_einit.py::test_random_permutation_invariance -v
+# Stanford bunny integration test
+pytest einit_tests/test_integration.py -v
 ```
 
 **Test Coverage:**
-- **Core Algorithm Tests** (`test_einit.py`): Basic functionality, permutation invariance, noise robustness, and Stanford bunny dataset validation
-- **Integration Tests** (`test_integration.py`): End-to-end pipeline testing with real-world scenarios
+- **Core Tests**: Basic functionality, synthetic shapes (spheres, cube surfaces), and Stanford bunny validation
+- **Integration Test**: Real-world Stanford bunny PLY dataset with partial overlap and noise
 
 ## Documentation
 

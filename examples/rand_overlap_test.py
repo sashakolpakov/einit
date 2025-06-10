@@ -7,13 +7,12 @@ unlike artificial bbox crops.
 
 import numpy as np
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 import sys
 import os
 
 # Add the parent directory to path to import einit
-sys.path.insert(0, os.path.dirname(__file__))
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'tests'))
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__)), 'einit_tests'))
 
 from einit import register_ellipsoid
 from test_einit import download_stanford_bunny, apply_transform, random_rigid_transform
@@ -42,19 +41,11 @@ def create_real_partial_overlap(src, overlap_fraction=0.8, noise_std=0.02, visua
     n_overlap = int(n_points * overlap_fraction)
     
     # Randomly select DIFFERENT points for source and destination (breaks correspondence)
-    src_overlap_indices = np.random.choice(n_points, n_overlap, replace=False)
-    dst_overlap_indices = np.random.choice(n_points, n_overlap, replace=False)
+    src_indices = np.random.choice(n_points, n_overlap, replace=False)
+    dst_indices = np.random.choice(n_points, n_overlap, replace=False)
     
-    # Add some non-overlapping points to make it realistic
-    n_src_only = int(n_points * 0.1)  # 10% points only in source
-    n_dst_only = int(n_points * 0.1)  # 10% points only in destination
-    
-    # Source partial cloud: just the randomly selected points
-    src_indices = src_overlap_indices
+    # Create partial clouds
     src_partial = src[src_indices]
-    
-    # Destination partial cloud: different randomly selected points  
-    dst_indices = dst_overlap_indices
     dst_partial = dst_noisy[dst_indices]
     
     if visualize:
@@ -90,7 +81,7 @@ def create_real_partial_overlap(src, overlap_fraction=0.8, noise_std=0.02, visua
         plt.tight_layout()
         plt.show()
     
-    return src_partial, dst_partial, T_true, src_overlap_indices
+    return src_partial, dst_partial, T_true, src_indices
 
 def test_and_visualize_real_overlap():
     """Test EINIT on real partial overlap with detailed visualization"""
@@ -144,7 +135,6 @@ def test_and_visualize_real_overlap():
         print(f"  Full cloud RMSE: {full_rmse:.6f}")
         print(f"  Transform error: {transform_error:.6f}")
         print(f"  Overlap RMSE: {overlap_rmse:.6f}")
-        print(f"  Transform error: {transform_error:.6f}")
         print(f"  Result: {'✓ PASS' if success else '✗ FAIL'}")
         
         # Create results visualization
@@ -164,7 +154,7 @@ def test_and_visualize_real_overlap():
         errors = np.linalg.norm(src_full_aligned - dst_full_true, axis=1)
         scatter = ax2.scatter(src_full_aligned[:, 0], src_full_aligned[:, 1], src_full_aligned[:, 2], 
                             c=errors, cmap='hot', alpha=0.7, s=20)
-        ax2.set_title('Point-wise Errors (Red=High)')
+        ax2.set_title('Point-wise Errors')
         plt.colorbar(scatter, ax=ax2, shrink=0.8)
         
         # Plot 3: Overlap region alignment

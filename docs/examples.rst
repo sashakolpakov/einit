@@ -10,7 +10,7 @@ Simple Point Cloud Alignment
 .. code-block:: python
 
    import numpy as np
-   from einit import ellipsoid_init_icp
+   from einit import register_ellipsoid
 
    # Create source points (sphere)
    n = 1000
@@ -28,7 +28,7 @@ Simple Point Cloud Alignment
    dst = src @ R.T + t
 
    # Compute initial transformation
-   T_init = ellipsoid_init_icp(src, dst)
+   T_init = register_ellipsoid(src, dst)
    print("Estimated transformation:")
    print(T_init)
 
@@ -42,7 +42,7 @@ Using with cv2.estimateAffine3D
 
    import cv2
    import numpy as np
-   from einit import ellipsoid_init_icp
+   from einit import register_ellipsoid
 
    def apply_transform(pts, T):
        """Apply 4x4 homogeneous transform to points."""
@@ -63,7 +63,7 @@ Using with cv2.estimateAffine3D
        return init_T
 
    # Use einit for initialization, then refine with OpenCV
-   T_init = ellipsoid_init_icp(src, dst)
+   T_init = register_ellipsoid(src, dst)
    T_final = refine_with_opencv(src, dst, T_init)
 
 Real-World Data
@@ -79,7 +79,7 @@ Working with Noisy Point Clouds
    dst_noisy = dst + np.random.normal(0, noise_std, dst.shape)
 
    # Algorithm handles noise well
-   T_init = ellipsoid_init_icp(src, dst_noisy)
+   T_init = register_ellipsoid(src, dst_noisy)
    aligned = apply_transform(src, T_init)
 
    # Compute alignment quality
@@ -102,7 +102,7 @@ Partial Overlap Scenarios
    dst_partial = dst_noisy[indices]
 
    # Algorithm works with partial data
-   T_init = ellipsoid_init_icp(src_partial, dst_partial)
+   T_init = register_ellipsoid(src_partial, dst_partial)
 
 Visualization
 -------------

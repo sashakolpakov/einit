@@ -2,7 +2,7 @@
 """
 einit – Ellipsoid ICP initialization
 
-Provides ellipsoid_init_icp(src, dst) that:
+Provides register_ellipsoid(src, dst) that:
  1. Centers src & dst by their centroids.
  2. Computes ellipsoid matrices; eigen-decomposes to get principal axes.
  3. Searches all 8 diagonal ±1 reflections for best alignment.
@@ -12,7 +12,7 @@ Provides ellipsoid_init_icp(src, dst) that:
 import numpy as np
 from scipy.spatial import cKDTree
 
-__all__ = ["ellipsoid_init_icp", "barycentered"]
+__all__ = ["register_ellipsoid", "barycentered"]
 
 
 def barycentered(points):
@@ -21,7 +21,7 @@ def barycentered(points):
     return points - centroid
 
 
-def ellipsoid_init_icp(src_points, dst_points, max_correspondence_distance=None,
+def register_ellipsoid(src_points, dst_points, max_correspondence_distance=None,
                       min_inlier_fraction=0.5, leafsize=16, positive_only=False):
     """
     Compute initial transformation between 3D point clouds using ellipsoid analysis.
@@ -73,16 +73,16 @@ def ellipsoid_init_icp(src_points, dst_points, max_correspondence_distance=None,
     Basic usage:
     
     >>> import numpy as np
-    >>> from einit import ellipsoid_init_icp
+    >>> from einit import register_ellipsoid
     >>> src = np.random.randn(100, 3)
     >>> dst = np.random.randn(80, 3)  # Different size OK
-    >>> T = ellipsoid_init_icp(src, dst)
+    >>> T = register_ellipsoid(src, dst)
     >>> T.shape
     (4, 4)
     
     With custom parameters:
     
-    >>> T = ellipsoid_init_icp(
+    >>> T = register_ellipsoid(
     ...     src, dst,
     ...     max_correspondence_distance=0.1,
     ...     min_inlier_fraction=0.7,

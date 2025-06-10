@@ -15,7 +15,7 @@ import os
 sys.path.insert(0, os.path.dirname(__file__))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'tests'))
 
-from einit import ellipsoid_init_icp
+from einit import register_ellipsoid
 from test_einit import download_stanford_bunny, apply_transform, random_rigid_transform
 
 def create_real_partial_overlap(src, overlap_fraction=0.8, noise_std=0.02, visualize=False):
@@ -123,7 +123,7 @@ def test_and_visualize_real_overlap():
         
         # Test EINIT
         print(f"\nRunning EINIT...")
-        T_recovered = ellipsoid_init_icp(src_partial, dst_partial, positive_only=True)
+        T_recovered = register_ellipsoid(src_partial, dst_partial, positive_only=True)
         
         # Evaluate results
         src_full_aligned = apply_transform(src, T_recovered)

@@ -1,3 +1,3 @@
-from .einit import ellipsoid_init_icp, barycentered
+from .einit import register_ellipsoid, barycentered
 
-__all__ = ["ellipsoid_init_icp", "barycentered"]
+__all__ = ["register_ellipsoid", "barycentered"]

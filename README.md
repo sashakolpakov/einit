@@ -46,18 +46,18 @@
 
 ```python
 import numpy as np
-from einit import ellipsoid_init_icp
+from einit import register_ellipsoid
 
 # Your point clouds (N x 3 arrays)
 src_points = np.random.randn(1000, 3)
 dst_points = src_points @ R + t  # Apply some transformation
 
 # Get the transformation matrix
-T = ellipsoid_init_icp(src_points, dst_points)
+T = register_ellipsoid(src_points, dst_points)
 print(T)  # 4x4 homogeneous transformation matrix
 
 # With custom parameters for robustness control
-T = ellipsoid_init_icp(
+T = register_ellipsoid(
     src_points, dst_points,
     max_correspondence_distance=0.1,  # Maximum distance for valid correspondences
     min_inlier_fraction=0.7,          # Require 70% valid correspondences  
@@ -120,10 +120,10 @@ KD-tree correspondence recovery makes the algorithm robust to point cloud permut
 
 ```python
 import cv2
-from einit import ellipsoid_init_icp
+from einit import register_ellipsoid
 
 # Get initial transformation
-T_init = ellipsoid_init_icp(src, dst)
+T_init = register_ellipsoid(src, dst)
 
 # Refine alignment with OpenCV 
 src_aligned = apply_transform(src, T_init)

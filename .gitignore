@@ -67,6 +67,7 @@ instance/
 
 # Sphinx documentation
 docs/_build/
+einit_docs/_build/
 
 # PyBuilder
 .pybuilder/
@@ -172,6 +173,11 @@ cython_debug/
 
 # Development and research files
 dev/
+
+# Local development - reiya components
+reiya/
+reiya_*/
+*reiya*.py
 
 # macOS system files
 .DS_Store

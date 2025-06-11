@@ -148,7 +148,7 @@ Running Examples and Tests
 Examples Directory
 ~~~~~~~~~~~~~~~~~~
 
-The ``examples/`` directory contains several demonstration scripts and notebooks:
+The ``einit_examples/`` directory contains several demonstration scripts and notebooks:
 
 **Interactive Jupyter Notebook**
 
@@ -157,7 +157,7 @@ Comprehensive visual demonstrations including sphere, cube, and Stanford bunny a
 .. code-block:: bash
 
    # Launch Jupyter and open the notebook
-   jupyter notebook examples/visual_tests.ipynb
+   jupyter notebook einit_examples/visual_tests.ipynb
 
 **Permutation Invariance Test**
 
@@ -165,7 +165,7 @@ Demonstrates that einit correctly handles randomly permuted point clouds:
 
 .. code-block:: bash
 
-   python examples/point_reoder_test.py
+   python einit_examples/point_reoder_test.py
 
 This script shows that einit's ellipsoid-based approach is robust to point ordering changes, achieving identical performance whether points are permuted or not.
 
@@ -175,7 +175,7 @@ Tests algorithm robustness with realistic partial overlap scenarios using Stanfo
 
 .. code-block:: bash
 
-   python examples/rand_overlap_test.py
+   python einit_examples/rand_overlap_test.py
 
 **Bounding Box Overlap Test**
 
@@ -183,7 +183,7 @@ Evaluates performance with geometric bounding box constraints:
 
 .. code-block:: bash
 
-   python examples/bbox_overlap_test.py
+   python einit_examples/bbox_overlap_test.py
 
 The notebook includes:
 

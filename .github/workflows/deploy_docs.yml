@@ -27,7 +27,7 @@ jobs:
     
     - name: Build documentation
       run: |
-        cd docs
+        cd einit_docs
         sphinx-build -b html . _build/html
     
     - name: Deploy to GitHub Pages
@@ -35,7 +35,7 @@ jobs:
       if: github.ref == 'refs/heads/main'
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./docs/_build/html
+        publish_dir: ./einit_docs/_build/html
         publish_branch: gh-pages
         force_orphan: true  # Clean the branch each time
         user_name: 'github-actions[bot]'

@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/einit.png" alt="einit logo" height="320"/>
+  <img src="einit_docs/einit.png" alt="einit logo" height="320"/>
 </p>
 
 <h1 align="center">Fast and Robust ICP Initialization</h1>
@@ -137,32 +137,32 @@ retval, T_refined, inliers = cv2.estimateAffine3D(
 
 ### Running Examples
 
-The `examples/` directory contains demonstrations and visualizations:
+The `einit_examples/` directory contains demonstrations and visualizations:
 
 **Interactive Jupyter Notebook:**
 ```bash
-jupyter notebook examples/visual_tests.ipynb
+jupyter notebook einit_examples/visual_tests.ipynb
 ```
 [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](
-  https://colab.research.google.com/github/sashakolpakov/einit/blob/main/examples/visual_tests.ipynb
+  https://colab.research.google.com/github/sashakolpakov/einit/blob/main/einit_examples/visual_tests.ipynb
 )
 Comprehensive visual demonstrations including sphere, cube, and Stanford bunny alignments with performance analysis.
 
 **Permutation Invariance Test:**
 ```bash
-python examples/point_reoder_test.py
+python einit_examples/point_reoder_test.py
 ```
 Demonstrates that einit correctly handles randomly permuted point clouds.
 
 **Partial Overlap Test:**
 ```bash
-python examples/rand_overlap_test.py
+python einit_examples/rand_overlap_test.py
 ```
 Tests algorithm robustness with randomized partial overlap scenarios using the Stanford bunny.
 
 **Bounding Box Overlap Test:**
 ```bash
-python examples/bbox_overlap_test.py
+python einit_examples/bbox_overlap_test.py
 ```
 Evaluates performance on the Stanford bunny with geometric bounding box constraints.
 

@@ -14,7 +14,7 @@ def main():
     
     # Get project root directory
     project_root = Path(__file__).parent
-    docs_dir = project_root / "docs"
+    docs_dir = project_root / "einit_docs"
     build_dir = docs_dir / "_build"
     
     print("Building einit documentation...")

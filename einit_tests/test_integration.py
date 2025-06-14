@@ -8,7 +8,11 @@ import tarfile
 import io
 import timeit
 import open3d as o3d
-import cv2
+try:
+    import cv2
+    CV2_AVAILABLE = True
+except ImportError:
+    CV2_AVAILABLE = False
 from scipy.spatial import cKDTree
 from einit import register_ellipsoid
 
@@ -181,13 +185,18 @@ def test_bunny_alignment_icp():
         rmse_einit = calculate_rmse(src_einit_aligned, dst_clean)
 
         # OpenCV ICP refinement
-        try:
-            T_opencv_icp = opencv_icp(src_einit_aligned, dst_clean)
-            T_opencv_final = T_opencv_icp @ T_einit
-            src_opencv_aligned = apply_transform(src_clean, T_opencv_final)
-            rmse_opencv = calculate_rmse(src_opencv_aligned, dst_clean)
-        except Exception as e:
-            print(f"OpenCV ICP failed: {e}")
+        if CV2_AVAILABLE:
+            try:
+                T_opencv_icp = opencv_icp(src_einit_aligned, dst_clean)
+                T_opencv_final = T_opencv_icp @ T_einit
+                src_opencv_aligned = apply_transform(src_clean, T_opencv_final)
+                rmse_opencv = calculate_rmse(src_opencv_aligned, dst_clean)
+            except Exception as e:
+                print(f"OpenCV ICP failed: {e}")
+                rmse_opencv = float('inf')
+                T_opencv_final = T_einit
+        else:
+            print("OpenCV not available, skipping OpenCV ICP")
             rmse_opencv = float('inf')
             T_opencv_final = T_einit
 
@@ -218,11 +227,13 @@ def test_bunny_alignment_icp():
         print(f"\nAlignment RMSE Comparison (on clean clouds):")
         print(f"  Einit only:        {rmse_einit:.6f}")
         
-        if rmse_opencv != float('inf'):
+        if CV2_AVAILABLE and rmse_opencv != float('inf'):
             improvement_opencv = ((rmse_einit - rmse_opencv) / rmse_einit * 100) if rmse_einit > 0 else 0
             print(f"  Einit + OpenCV ICP: {rmse_opencv:.6f} (improvement: {improvement_opencv:.1f}%)")
-        else:
+        elif CV2_AVAILABLE:
             print(f"  Einit + OpenCV ICP: FAILED")
+        else:
+            print(f"  Einit + OpenCV ICP: SKIPPED (OpenCV not available)")
             
         if rmse_open3d != float('inf'):
             improvement_open3d = ((rmse_einit - rmse_open3d) / rmse_einit * 100) if rmse_einit > 0 else 0
@@ -237,7 +248,7 @@ def test_bunny_alignment_icp():
         
         print(f"\nTransform Frobenius Errors:")
         print(f"  Einit only:        {frob_error_einit:.6f}")
-        if frob_error_opencv != float('inf'):
+        if CV2_AVAILABLE and frob_error_opencv != float('inf'):
             print(f"  Einit + OpenCV ICP: {frob_error_opencv:.6f}")
         if frob_error_open3d != float('inf'):
             print(f"  Einit + Open3D ICP: {frob_error_open3d:.6f}")

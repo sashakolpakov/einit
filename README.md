@@ -98,8 +98,8 @@ Real-world performance on test datasets:
 
 | Dataset | Points | RMSE  | Time             |
 |---------|--------|-------|------------------|
-| Sphere  | 1500   | 0.03  | 0.006 ± 0.002 ms |  
-| Cube    | 3375   | 0.02  | 0.010 ± 0.008 ms |
+| Sphere  | 1500   | 0.035 | 0.006 ± 0.002 ms |  
+| Cube    | 3375   | 0.025 | 0.010 ± 0.008 ms |
 | Bunny   | 992    | 0.02  | 0.047 ± 0.021 ms |
 
 *With 0.01-0.02 standard Gaussian noise and partial overlap*

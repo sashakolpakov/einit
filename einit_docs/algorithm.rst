@@ -198,10 +198,11 @@ Robustness Properties
 The algorithm handles several challenging scenarios:
 
 1. **Scale Invariance**: Uniform scaling of input point clouds does not affect the result
-2. **Noise Tolerance**: Moderate noise in point coordinates has limited impact on principal axes computation
+2. **Noise Tolerance**: RMSE grows approximately linearly with noise level, maintaining robust performance even with significant noise (validated via correlation analysis r > 0.7)
 3. **Partial Overlap**: Works with point clouds that have different numbers of points, occlusions, and missing correspondences
 4. **Permutation Invariance**: Point ordering in the input arrays does not affect the result
-5. **Outlier Rejection**: Distance thresholding filters out poor correspondences 
+5. **Outlier Rejection**: Distance thresholding filters out poor correspondences
+6. **Performance Scaling**: Time complexity verified to be sub-quadratic (O(n^α) where α < 2.0) via log-log regression analysis 
 
 
 Applications and Use Cases

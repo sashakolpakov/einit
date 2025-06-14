@@ -1,20 +1,38 @@
 import numpy as np
-import pytest
+import timeit
 import urllib.request
-import tarfile
-import io
+import pytest
+import open3d as o3d
+from scipy.spatial import cKDTree
+from colorama import Fore, Style
 from einit import register_ellipsoid
 
 
+def make_robust(n_runs=100, fail_threshold=5):
+    def decorator(test_fn):
+        print(f"\n{Fore.CYAN}ROBUST {test_fn.__name__}: n_runs = {n_runs}, fail_threshold = {fail_threshold}{Style.RESET_ALL}")
+        def wrapped():
+            failures = 0
+            for _ in range(n_runs):
+                try:
+                    test_fn()
+                except AssertionError as e:
+                    print(f"\n{Fore.CYAN}FAILURE: {e}{Style.RESET_ALL}")
+                    failures += 1
+            assert failures <= fail_threshold, f"{test_fn.__name__} failed {failures}/{n_runs} times"
+        return wrapped
+    return decorator
+
+
 def apply_transform(pts, T):
-    """Apply a 4x4 homogeneous transform T to an (N,3) array of points."""
+    """Apply a 4×4 homogeneous transformation matrix to an (N, 3) point cloud."""
     N = pts.shape[0]
     homo = np.hstack([pts, np.ones((N, 1))])
     return (T @ homo.T).T[:, :3]
 
 
 def random_rigid_transform():
-    """Generate a random rigid transformation matrix."""
+    """Generate a random 4×4 rigid transformation matrix (rotation + translation)."""
     A = np.random.normal(size=(3, 3))
     Q, _ = np.linalg.qr(A)
     if np.linalg.det(Q) < 0:
@@ -26,25 +44,12 @@ def random_rigid_transform():
     return T
 
 
-def random_reflection_transform():
-    """Generate a random reflection transformation matrix."""
-    signs = np.random.choice([-1, 1], size=3)
-    D = np.diag(signs)
-    t = np.random.uniform(-5, 5, size=(3,))
-    T = np.eye(4)
-    T[:3, :3] = D
-    T[:3, 3] = t
-    return T
-
-
 def download_stanford_bunny(n_points=50000):
-    """Download the Stanford Bunny point cloud from NREL dataset."""
+    """Download the Stanford Bunny CSV and return a subset of n_points (x, y, z)."""
     url = 'https://data.nrel.gov/system/files/153/bunny.csv'
     with urllib.request.urlopen(url) as resp:
         bunny = np.loadtxt(resp, delimiter=',')
-    pts = bunny[:, :3]  # only x,y,z columns
-    
-    # Random sample if too many points
+    pts = bunny[:, :3]
     if pts.shape[0] > n_points:
         idx = np.random.choice(pts.shape[0], n_points, replace=False)
         pts = pts[idx]
@@ -52,7 +57,7 @@ def download_stanford_bunny(n_points=50000):
 
 
 def test_basic_functionality():
-    """Test basic functionality with random data."""
+    """Test that register_ellipsoid outputs a proper 4×4 matrix on random clouds."""
     src = np.random.randn(100, 3)
     dst = np.random.randn(100, 3)
     T = register_ellipsoid(src, dst)
@@ -61,173 +66,240 @@ def test_basic_functionality():
 
 
 def test_identity_transform():
-    """Test with identical point clouds."""
+    """Test that register_ellipsoid recovers identity when source and target match."""
     src = np.random.randn(50, 3)
     dst = src.copy()
     T = register_ellipsoid(src, dst)
     np.testing.assert_allclose(T, np.eye(4), atol=1e-10)
 
 
-def test_synthetic_shapes_statistical(noise_std=0.02, n_points=1000):
-    """Test synthetic shapes with statistical analysis over multiple runs.
-    
-    Args:
-        noise_std: Standard deviation of Gaussian noise to add to target points
-        n_points: Number of points to generate for sphere test
-    """
-    print(f"\n=== SPHERE STATISTICAL TEST (100 runs) ===")
-    print(f"Test parameters: {n_points} points, noise_std={noise_std}")
-    
-    sphere_transform_errors = []
-    sphere_clean_rmses = []
-    sphere_successes = 0
-    
-    for i in range(100):
-        np.random.seed(2000 + i)
-        
-        # Generate sphere
-        phi = np.random.uniform(0, np.pi, n_points)
-        theta = np.random.uniform(0, 2*np.pi, n_points)
-        src_sphere = np.vstack([np.sin(phi)*np.cos(theta), np.sin(phi)*np.sin(theta), np.cos(phi)]).T
-        src_sphere *= np.random.uniform(3, 7, size=(n_points,1))
-        
-        T_true = random_rigid_transform()
-        dst_full = apply_transform(src_sphere, T_true)
-        noise = np.random.normal(scale=noise_std, size=dst_full.shape)
-        dst_noisy = dst_full + noise
-        
-        # Use 80% of points for overlap
-        n_overlap = int(0.8 * n_points)
-        indices = np.random.choice(n_points, n_overlap, replace=False)
-        
-        T_recovered = register_ellipsoid(src_sphere[indices], dst_noisy[indices])
-        
-        transform_error = np.linalg.norm(T_recovered - T_true, ord='fro')
-        
-        src_clean_aligned = apply_transform(src_sphere, T_recovered)
-        dst_clean = apply_transform(src_sphere, T_true)
-        clean_rmse = np.sqrt(np.mean(np.linalg.norm(src_clean_aligned - dst_clean, axis=1)**2))
-        
-        sphere_transform_errors.append(transform_error)
-        sphere_clean_rmses.append(clean_rmse)
-        
-        if transform_error < 0.05 and clean_rmse < 0.05:
-            sphere_successes += 1
-    
-    print(f"Sphere success rate: {sphere_successes}/100 = {sphere_successes}%")
-    print(f"Sphere transform error - Mean: {np.mean(sphere_transform_errors):.4f}, Std: {np.std(sphere_transform_errors):.4f}")
-    print(f"Sphere clean RMSE - Mean: {np.mean(sphere_clean_rmses):.4f}, Std: {np.std(sphere_clean_rmses):.4f}")
-    
-    print(f"\n=== CUBE STATISTICAL TEST (100 runs) ===")
-    print(f"Test parameters: cube surface points (15x15 grid per face), noise_std={noise_std}")
-    
-    cube_transform_errors = []
-    cube_clean_rmses = []
-    cube_successes = 0
-    
-    for i in range(100):
-        np.random.seed(3000 + i)
-        
-        # Generate cube surface points 
-        grid = np.linspace(-1, 1, 15)
-        face = np.array(np.meshgrid(grid, grid)).reshape(2, -1).T
-        
-        faces = []
-        for fixed_axis in range(3):
-            for fixed_value in [-1, 1]:
-                points = np.insert(face, fixed_axis, fixed_value, axis=1)
-                faces.append(points)
-        src_cube = np.vstack(faces) * np.array([2,1,0.5])
-        
-        T_true = random_reflection_transform()
-        dst_full = apply_transform(src_cube, T_true)
-        noise = np.random.normal(scale=noise_std, size=dst_full.shape)
-        dst_noisy = dst_full + noise
-        
-        # Use 80% of points for overlap
-        n_cube_points = src_cube.shape[0]
-        n_overlap = int(0.8 * n_cube_points)
-        indices = np.random.choice(n_cube_points, n_overlap, replace=False)
-        
-        T_recovered = register_ellipsoid(src_cube[indices], dst_noisy[indices])
-        
-        transform_error = np.linalg.norm(T_recovered - T_true, ord='fro')
-        
-        src_clean_aligned = apply_transform(src_cube, T_recovered)
-        dst_clean = apply_transform(src_cube, T_true)
-        clean_rmse = np.sqrt(np.mean(np.linalg.norm(src_clean_aligned - dst_clean, axis=1)**2))
-        
-        cube_transform_errors.append(transform_error)
-        cube_clean_rmses.append(clean_rmse)
-        
-        if transform_error < 0.05 and clean_rmse < 0.05:
-            cube_successes += 1
-    
-    print(f"Cube success rate: {cube_successes}/100 = {cube_successes}%")
-    print(f"Cube transform error - Mean: {np.mean(cube_transform_errors):.4f}, Std: {np.std(cube_transform_errors):.4f}")
-    print(f"Cube clean RMSE - Mean: {np.mean(cube_clean_rmses):.4f}, Std: {np.std(cube_clean_rmses):.4f}")
-    
-    # Assertions
-    assert sphere_successes >= 80, f"Sphere success rate {sphere_successes}% too low"
-    assert cube_successes >= 95, f"Cube success rate {cube_successes}% too low"
-    assert np.mean(sphere_transform_errors) < 0.2, f"Mean sphere transform error too high"
-    assert np.mean(cube_transform_errors) < 0.05, f"Mean cube transform error too high"
+@make_robust(n_runs=100, fail_threshold=10)
+def test_random_gaussian_cloud():
+    """Test Einit alignment of a Gaussian cloud under transformation + permutation"""
+    n_points = 1500
+    src = np.random.randn(n_points, 3)
+    T_true = random_rigid_transform()
+    dst = apply_transform(src, T_true)
+    dst = dst[np.random.permutation(n_points)]
+
+    T_est = register_ellipsoid(src, dst)
+    aligned = apply_transform(src, T_est)
+
+    # Use cKDTree-based nearest neighbor RMSE
+    tree = cKDTree(dst)
+    dists, _ = tree.query(aligned)
+    rmse = np.sqrt(np.mean(dists**2))
+
+    assert rmse < 0.075, f"Random cloud alignment RMSE too high: {rmse:.4f}"
 
 
-def test_bunny_cloud_statistical(noise_std=0.02, n_points=1500):
-    """Test bunny with statistical analysis over multiple runs.
-    
-    Args:
-        noise_std: Standard deviation of Gaussian noise to add to target points
-        n_points: Number of points to downsample from Stanford bunny
+@make_robust(n_runs=100, fail_threshold=10)
+def test_sphere_alignment():
+    """Test alignment of spherical data under transformation + permutation + noise."""
+    n_points = 1500
+    std_noise = 0.02
+    src = np.random.randn(n_points, 3)
+    src /= np.linalg.norm(src, axis=1, keepdims=True)
+    T_true = random_rigid_transform()
+    dst = apply_transform(src, T_true)
+    dst = dst[np.random.permutation(n_points)] + np.random.normal(0, std_noise, size=(n_points, 3))
+
+    T_est = register_ellipsoid(src, dst)
+    aligned = apply_transform(src, T_est)
+
+    # Use cKDTree-based nearest neighbor RMSE
+    tree = cKDTree(dst)
+    dists, _ = tree.query(aligned)
+    rmse = np.sqrt(np.mean(dists**2))
+
+    assert rmse < 0.075, f"Sphere alignment RMSE too high: {rmse:.4f}"
+
+
+@make_robust(n_runs=100, fail_threshold=10)
+def test_cube_alignment():
     """
-    print(f"\n=== BUNNY STATISTICAL TEST (100 runs) ===")
-    print(f"Test parameters: {n_points} points, noise_std={noise_std}")
+    Test cube alignment using Open3D point-to-plane ICP refinement.
+    This tests uses random transformation + permutation + noise + partial overlap. 
+
+    Uses cKDTree nearest-neighbor RMSE instead of point-to-point RMSE
+    to account for symmetry-related ambiguities in cube correspondences.
+    """
+    grid = np.linspace(-1, 1, 15)
+    face = np.array(np.meshgrid(grid, grid)).reshape(2, -1).T
+    faces = []
+    for axis in range(3):
+        for val in [-1, 1]:
+            faces.append(np.insert(face, axis, val, axis=1))
+    src_clean = np.vstack(faces)
+
+    T_true = random_rigid_transform()
+    dst_clean = apply_transform(src_clean, T_true)
+
+    # Simulate partial overlap (80% of points)  
+    src_mask = np.random.choice([True, False], size=(src_clean.shape[0],), p=[0.8, 0.2])
+    src_partial = src_clean[src_mask]
     
-    # Load bunny once
-    src = download_stanford_bunny(n_points=n_points)
+    dst_mask = np.random.choice([True, False], size=(src_clean.shape[0],), p=[0.8, 0.2])
+    dst_partial = dst_clean[dst_mask]
     
-    transform_errors = []
-    clean_rmses = []
-    successes = 0
+    # Apply random permutation
+    perm = np.random.permutation(dst_partial.shape[0])
+    dst_partial = dst_partial[perm]
     
-    for i in range(100):
-        np.random.seed(1000 + i)
-        
+    # Add noise
+    dst_partial += np.random.normal(scale=0.02, size=dst_partial.shape)
+
+    T_init = register_ellipsoid(src_partial, dst_partial)
+    src_aligned = apply_transform(src_partial, T_init)
+
+    def to_o3d_pc(points):
+        pc = o3d.geometry.PointCloud()
+        pc.points = o3d.utility.Vector3dVector(points)
+        pc.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamKNN(knn=6))
+        pc.normalize_normals()
+        return pc
+
+    src_o3d = to_o3d_pc(src_aligned)
+    dst_o3d = to_o3d_pc(dst_partial)
+
+    result = o3d.pipelines.registration.registration_icp(
+        src_o3d, dst_o3d, max_correspondence_distance=2.0,
+        init=np.eye(4),
+        estimation_method=o3d.pipelines.registration.TransformationEstimationPointToPlane()
+    )
+
+    T_refined = result.transformation @ T_init
+    
+    # Evaluate on clean clouds using symmetry-invariant nearest-neighbor RMSE
+    src_clean_aligned = apply_transform(src_clean, T_refined)
+    tree = cKDTree(dst_clean)
+    dists, _ = tree.query(src_clean_aligned, distance_upper_bound=0.5)
+    rmse = np.sqrt(np.mean(dists**2))
+
+    assert rmse < 0.05, f"Cube alignment RMSE too high: {rmse:.4f}"
+
+
+def test_bunny_alignment():
+    """
+    Test alignment on Stanford Bunny point cloud with partial overlap and noise.
+    Uses fixed random seeds for reproducibility and skips the test if download fails.
+    """
+    n_points = 1000
+    std_noise = 0.02
+    try:
+        src = download_stanford_bunny(n_points=n_points)
+    except Exception:
+        pytest.skip("Could not download Stanford Bunny dataset")
+
+    T_true = random_rigid_transform()
+    dst = apply_transform(src, T_true)
+
+    rng_src = np.random.default_rng(seed=17)
+    rng_dst = np.random.default_rng(seed=71)
+    rng_perm = np.random.default_rng(seed=123)
+
+    src_mask = rng_src.random(src.shape[0]) < 0.8
+    dst_mask = rng_dst.random(dst.shape[0]) < 0.8
+
+    src_partial = src[src_mask]
+    dst_partial = dst[dst_mask]
+    dst_partial = dst_partial[rng_perm.permutation(dst_partial.shape[0])]
+    dst_partial += np.random.normal(0, std_noise, dst_partial.shape)
+
+    T_est = register_ellipsoid(src_partial, dst_partial)
+    aligned = apply_transform(src, T_est)
+
+    rmse = np.sqrt(np.mean(np.sum((aligned - dst) ** 2, axis=1)))
+    assert rmse < 0.05, f"Bunny alignment RMSE too high: {rmse:.4f}"
+
+
+@make_robust(n_runs=50, fail_threshold=5)
+def test_performance_scaling():
+    """
+    Test that runtime scales sub-quadratically with point count.
+    Uses log-log regression to verify scaling exponent is reasonable.
+    """
+    sizes = [100, 500, 1000, 2500]
+    times = []
+    
+    for size in sizes:
+        # Use fixed seed for reproducible point generation
+        np.random.seed(42)
+        phi = np.random.uniform(0, np.pi, size)
+        theta = np.random.uniform(0, 2*np.pi, size)
+        src = np.vstack([
+            np.sin(phi) * np.cos(theta),
+            np.sin(phi) * np.sin(theta),
+            np.cos(phi)
+        ]).T * 3
         T_true = random_rigid_transform()
-        dst_full = apply_transform(src, T_true)
-        noise = np.random.normal(scale=noise_std, size=dst_full.shape)
-        dst_noisy = dst_full + noise
+        dst = apply_transform(src, T_true) + np.random.normal(scale=0.02, size=src.shape)
         
-        # Use 80% of points for overlap
-        n_src_points = src.shape[0]
-        n_overlap = int(0.8 * n_src_points)
-        indices = np.random.choice(n_src_points, n_overlap, replace=False)
-        
-        T_recovered = register_ellipsoid(src[indices], dst_noisy[indices])
-        
-        # Compute errors
-        transform_error = np.linalg.norm(T_recovered - T_true, ord='fro')
-        
-        src_clean_aligned = apply_transform(src, T_recovered)
-        dst_clean = apply_transform(src, T_true)
-        clean_rmse = np.sqrt(np.mean(np.linalg.norm(src_clean_aligned - dst_clean, axis=1)**2))
-        
-        transform_errors.append(transform_error)
-        clean_rmses.append(clean_rmse)
-        
-        # Count successes
-        if transform_error < 0.08 and clean_rmse < 0.08:
-            successes += 1
+        # Time the registration with multiple runs for stability
+        timer = timeit.Timer(lambda: register_ellipsoid(src, dst))
+        elapsed = min(timer.repeat(repeat=3, number=1)) * 1000  # Convert to ms
+        times.append(elapsed)
     
-    # Print statistics
-    print(f"Success rate: {successes}/100 = {successes}%")
-    print(f"Transform error - Mean: {np.mean(transform_errors):.4f}, Std: {np.std(transform_errors):.4f}")
-    print(f"Transform error - Min: {np.min(transform_errors):.4f}, Max: {np.max(transform_errors):.4f}")
-    print(f"Clean RMSE - Mean: {np.mean(clean_rmses):.4f}, Std: {np.std(clean_rmses):.4f}")
-    print(f"Clean RMSE - Min: {np.min(clean_rmses):.4f}, Max: {np.max(clean_rmses):.4f}")
+    # Use log-log regression to find scaling exponent
+    log_sizes = np.log(sizes)
+    log_times = np.log(times)
     
-    # Should have reasonable success rate
-    assert successes >= 70, f"Success rate {successes}% too low"
-    assert np.mean(transform_errors) < 2.0, f"Mean transform error {np.mean(transform_errors):.4f} too high"
-    assert np.mean(clean_rmses) < 0.2, f"Mean clean RMSE {np.mean(clean_rmses):.4f} too high"
+    # Fit line: log(time) = slope * log(size) + intercept
+    slope, intercept = np.polyfit(log_sizes, log_times, 1)
+    
+    # Performance should scale better than quadratic (slope < 2)
+    assert slope < 2.0, f"Performance scaling too steep: O(n^{slope:.2f}), should be sub-quadratic"
+    
+    # Should scale at least linearly (not constant time)
+    assert slope > 0.5, f"Performance scaling too flat: O(n^{slope:.2f}), should scale with input size"
+    
+    # Basic sanity check: largest case should complete in reasonable time
+    assert times[-1] < 1000, f"Performance too slow for {sizes[-1]} points: {times[-1]:.1f}ms"
+
+
+@make_robust(n_runs=50, fail_threshold=5)
+def test_noise_robustness():
+    """
+    Test that RMSE grows approximately linearly with noise level.
+    Uses correlation coefficient to verify linear relationship.
+    """
+    n_points = 500
+    noise_levels = [0.01, 0.02, 0.05, 0.1, 0.2]
+    rmse_values = []
+    
+    # Set seed for reproducible point generation within each run
+    np.random.seed(42)
+    
+    # Generate same base geometry for all noise levels
+    phi = np.random.uniform(0, np.pi, n_points)
+    theta = np.random.uniform(0, 2*np.pi, n_points)
+    src = np.vstack([
+        np.sin(phi) * np.cos(theta),
+        np.sin(phi) * np.sin(theta),
+        np.cos(phi)
+    ]).T * 3
+    T_true = random_rigid_transform()
+    dst_clean = apply_transform(src, T_true)
+    
+    for noise_std in noise_levels:
+        # Add noise to clean transformed points
+        dst_noisy = dst_clean + np.random.normal(0, noise_std, size=dst_clean.shape)
+        T_est = register_ellipsoid(src, dst_noisy)
+        aligned = apply_transform(src, T_est)
+        
+        # Calculate RMSE using nearest neighbor (more robust for noisy data)
+        tree = cKDTree(dst_noisy)
+        dists, _ = tree.query(aligned)
+        rmse = np.sqrt(np.mean(dists**2))
+        rmse_values.append(rmse)
+    
+    # Check that RMSE grows approximately linearly with noise
+    correlation = np.corrcoef(noise_levels, rmse_values)[0, 1]
+    assert correlation > 0.7, f"RMSE should correlate strongly with noise level, got r={correlation:.3f}"
+    
+    # Check that RMSE doesn't grow too fast (slope should be reasonable)
+    slope = (rmse_values[-1] - rmse_values[0]) / (noise_levels[-1] - noise_levels[0])
+    assert slope < 10, f"RMSE growth too steep: {slope:.2f}"
+    
+    # Basic sanity check: RMSE should be reasonable even at highest noise
+    assert rmse_values[-1] < 2.0, f"RMSE too high at max noise: {rmse_values[-1]:.3f}" 

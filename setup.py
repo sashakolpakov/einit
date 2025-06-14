@@ -19,10 +19,10 @@ setup(
     ],
     extras_require={
         "opencv": ["opencv-python-headless>=3.4"],
-        "test": ["pytest>=6.0", "opencv-python-headless>=3.4", "matplotlib>=3.0"],
+        "test": ["pytest>=6.0", "open3d>=0.17", "matplotlib>=3.0", "colorama>=0.4"],
         "docs": ["sphinx>=4.0", "sphinx_rtd_theme>=1.0"],
         "all": [
-            "opencv-python-headless>=3.4",
+            "open3d>=0.17",
             "pytest>=6.0",
             "matplotlib>=3.0",
             "sphinx>=4.0",

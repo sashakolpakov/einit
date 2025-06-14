@@ -214,7 +214,13 @@ To verify the installation and run comprehensive tests:
 
 The test suite includes:
 
-- **Core algorithm tests** (``test_einit.py``): Basic functionality, identity transforms, statistical analysis on synthetic shapes (spheres and cube surfaces), and Stanford bunny dataset validation using NREL data
-- **Integration tests** (``test_integration.py``): Stanford bunny alignment test using the original PLY dataset with partial overlap, noise, and performance benchmarking
+- **Core algorithm tests** (``test_einit.py``): Basic functionality, identity transforms, robust statistical analysis on synthetic shapes (spheres and cube surfaces), Stanford bunny dataset validation, noise robustness testing using correlation analysis, and performance scaling verification using log-log regression
+- **Integration tests** (``test_integration.py``): Stanford bunny alignment test using the original PLY dataset with partial overlap, noise, and ICP refinement comparison between OpenCV and Open3D methods
 
-Test results provide detailed statistics including success rates, RMSE distributions, transform errors, and performance timing for different geometric shapes and real-world data.
+The tests use advanced statistical validation methods:
+
+- **Noise robustness**: Verifies that RMSE grows approximately linearly with noise level using correlation coefficients (r > 0.7) rather than hard thresholds
+- **Performance scaling**: Uses log-log regression to verify sub-quadratic time complexity (O(n^α) where α < 2.0) across different point cloud sizes
+- **Robust testing**: Uses statistical repetition with configurable failure thresholds to handle inherent randomness in point cloud generation
+
+Test results provide detailed statistics including success rates, RMSE distributions, transform errors, correlation analysis, scaling exponents, and performance timing for different geometric shapes and real-world data.

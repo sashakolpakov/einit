@@ -1,0 +1,339 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Examples &mdash; einit 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=01f34227"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="OpenCV Integration" href="integration.html" />
+    <link rel="prev" title="API Reference" href="api.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            einit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentation:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="algorithm.html">Algorithm Details</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#basic-usage">Basic Usage</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#simple-point-cloud-alignment">Simple Point Cloud Alignment</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#integration-with-opencv">Integration with OpenCV</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#using-with-cv2-estimateaffine3d">Using with cv2.estimateAffine3D</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#real-world-data">Real-World Data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#working-with-noisy-point-clouds">Working with Noisy Point Clouds</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#partial-overlap-scenarios">Partial Overlap Scenarios</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#visualization">Visualization</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#d-plotting-with-matplotlib">3D Plotting with Matplotlib</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#running-examples-and-tests">Running Examples and Tests</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#examples-directory">Examples Directory</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#running-tests">Running Tests</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="integration.html">OpenCV Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="integration.html#integration-with-other-libraries">Integration with Other Libraries</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">einit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Examples</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/examples.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="examples">
+<h1>Examples<a class="headerlink" href="#examples" title="Link to this heading"></a></h1>
+<section id="basic-usage">
+<h2>Basic Usage<a class="headerlink" href="#basic-usage" title="Link to this heading"></a></h2>
+<section id="simple-point-cloud-alignment">
+<h3>Simple Point Cloud Alignment<a class="headerlink" href="#simple-point-cloud-alignment" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">einit</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_ellipsoid</span>
+
+<span class="c1"># Create source points (sphere)</span>
+<span class="n">n</span> <span class="o">=</span> <span class="mi">1000</span>
+<span class="n">phi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+<span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+<span class="n">src</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">([</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">),</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">),</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span>
+<span class="p">])</span> <span class="o">*</span> <span class="mi">5</span>  <span class="c1"># radius = 5</span>
+
+<span class="c1"># Create destination by applying known transformation</span>
+<span class="n">R</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span>  <span class="c1"># 90° rotation around Z</span>
+<span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>  <span class="c1"># translation</span>
+<span class="n">dst</span> <span class="o">=</span> <span class="n">src</span> <span class="o">@</span> <span class="n">R</span><span class="o">.</span><span class="n">T</span> <span class="o">+</span> <span class="n">t</span>
+
+<span class="c1"># Compute initial transformation</span>
+<span class="n">T_init</span> <span class="o">=</span> <span class="n">register_ellipsoid</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Estimated transformation:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">T_init</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="integration-with-opencv">
+<h2>Integration with OpenCV<a class="headerlink" href="#integration-with-opencv" title="Link to this heading"></a></h2>
+<section id="using-with-cv2-estimateaffine3d">
+<h3>Using with cv2.estimateAffine3D<a class="headerlink" href="#using-with-cv2-estimateaffine3d" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">cv2</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">einit</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_ellipsoid</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">apply_transform</span><span class="p">(</span><span class="n">pts</span><span class="p">,</span> <span class="n">T</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Apply 4x4 homogeneous transform to points.&quot;&quot;&quot;</span>
+    <span class="n">homo</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">([</span><span class="n">pts</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">pts</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">1</span><span class="p">))])</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">T</span> <span class="o">@</span> <span class="n">homo</span><span class="o">.</span><span class="n">T</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">3</span><span class="p">]</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">refine_with_opencv</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">,</span> <span class="n">init_T</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Refine einit result with OpenCV.&quot;&quot;&quot;</span>
+    <span class="n">src_aligned</span> <span class="o">=</span> <span class="n">apply_transform</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">init_T</span><span class="p">)</span>
+    <span class="n">retval</span><span class="p">,</span> <span class="n">out</span><span class="p">,</span> <span class="n">inliers</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">estimateAffine3D</span><span class="p">(</span>
+        <span class="n">src_aligned</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+        <span class="n">dst</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">retval</span><span class="p">:</span>
+        <span class="n">T_refined</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+        <span class="n">T_refined</span><span class="p">[:</span><span class="mi">3</span><span class="p">,</span> <span class="p">:</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="n">out</span>
+        <span class="k">return</span> <span class="n">T_refined</span> <span class="o">@</span> <span class="n">init_T</span>
+    <span class="k">return</span> <span class="n">init_T</span>
+
+<span class="c1"># Use einit for initialization, then refine with OpenCV</span>
+<span class="n">T_init</span> <span class="o">=</span> <span class="n">register_ellipsoid</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">)</span>
+<span class="n">T_final</span> <span class="o">=</span> <span class="n">refine_with_opencv</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">,</span> <span class="n">T_init</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="real-world-data">
+<h2>Real-World Data<a class="headerlink" href="#real-world-data" title="Link to this heading"></a></h2>
+<section id="working-with-noisy-point-clouds">
+<h3>Working with Noisy Point Clouds<a class="headerlink" href="#working-with-noisy-point-clouds" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Add realistic noise to destination points</span>
+<span class="n">noise_std</span> <span class="o">=</span> <span class="mf">0.02</span>
+<span class="n">dst_noisy</span> <span class="o">=</span> <span class="n">dst</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">noise_std</span><span class="p">,</span> <span class="n">dst</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+<span class="c1"># Algorithm handles noise well</span>
+<span class="n">T_init</span> <span class="o">=</span> <span class="n">register_ellipsoid</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dst_noisy</span><span class="p">)</span>
+<span class="n">aligned</span> <span class="o">=</span> <span class="n">apply_transform</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">T_init</span><span class="p">)</span>
+
+<span class="c1"># Compute alignment quality</span>
+<span class="n">errors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">aligned</span> <span class="o">-</span> <span class="n">dst_noisy</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">rmse</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">errors</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;RMSE: </span><span class="si">{</span><span class="n">rmse</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="partial-overlap-scenarios">
+<h3>Partial Overlap Scenarios<a class="headerlink" href="#partial-overlap-scenarios" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Simulate partial overlap (common in real scanning)</span>
+<span class="n">overlap_ratio</span> <span class="o">=</span> <span class="mf">0.7</span>
+<span class="n">n_overlap</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">src</span><span class="p">)</span> <span class="o">*</span> <span class="n">overlap_ratio</span><span class="p">)</span>
+
+<span class="c1"># Random subset of points</span>
+<span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">src</span><span class="p">),</span> <span class="n">n_overlap</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">src_partial</span> <span class="o">=</span> <span class="n">src</span><span class="p">[</span><span class="n">indices</span><span class="p">]</span>
+<span class="n">dst_partial</span> <span class="o">=</span> <span class="n">dst_noisy</span><span class="p">[</span><span class="n">indices</span><span class="p">]</span>
+
+<span class="c1"># Algorithm works with partial data</span>
+<span class="n">T_init</span> <span class="o">=</span> <span class="n">register_ellipsoid</span><span class="p">(</span><span class="n">src_partial</span><span class="p">,</span> <span class="n">dst_partial</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="visualization">
+<h2>Visualization<a class="headerlink" href="#visualization" title="Link to this heading"></a></h2>
+<section id="d-plotting-with-matplotlib">
+<h3>3D Plotting with Matplotlib<a class="headerlink" href="#d-plotting-with-matplotlib" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">mpl_toolkits.mplot3d</span><span class="w"> </span><span class="kn">import</span> <span class="n">Axes3D</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_alignment</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">,</span> <span class="n">aligned</span><span class="p">):</span>
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+
+    <span class="c1"># Original source</span>
+    <span class="n">ax1</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">131</span><span class="p">,</span> <span class="n">projection</span><span class="o">=</span><span class="s1">&#39;3d&#39;</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">src</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">src</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">src</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">c</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.6</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Source&#39;</span><span class="p">)</span>
+
+    <span class="c1"># Target destination</span>
+    <span class="n">ax2</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">132</span><span class="p">,</span> <span class="n">projection</span><span class="o">=</span><span class="s1">&#39;3d&#39;</span><span class="p">)</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">dst</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">dst</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">dst</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">c</span><span class="o">=</span><span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.6</span><span class="p">)</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Destination&#39;</span><span class="p">)</span>
+
+    <span class="c1"># Overlay aligned source with destination</span>
+    <span class="n">ax3</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">133</span><span class="p">,</span> <span class="n">projection</span><span class="o">=</span><span class="s1">&#39;3d&#39;</span><span class="p">)</span>
+    <span class="n">ax3</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">dst</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">dst</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">dst</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">c</span><span class="o">=</span><span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Target&#39;</span><span class="p">)</span>
+    <span class="n">ax3</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">aligned</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">aligned</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">aligned</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">c</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Aligned&#39;</span><span class="p">)</span>
+    <span class="n">ax3</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Alignment Result&#39;</span><span class="p">)</span>
+    <span class="n">ax3</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="c1"># Use the visualization</span>
+<span class="n">aligned</span> <span class="o">=</span> <span class="n">apply_transform</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">T_init</span><span class="p">)</span>
+<span class="n">plot_alignment</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">,</span> <span class="n">aligned</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="running-examples-and-tests">
+<h2>Running Examples and Tests<a class="headerlink" href="#running-examples-and-tests" title="Link to this heading"></a></h2>
+<section id="examples-directory">
+<h3>Examples Directory<a class="headerlink" href="#examples-directory" title="Link to this heading"></a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">einit_examples/</span></code> directory contains several demonstration scripts and notebooks:</p>
+<p><strong>Interactive Jupyter Notebook</strong></p>
+<p>Comprehensive visual demonstrations including sphere, cube, and Stanford bunny alignments with performance analysis:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Launch Jupyter and open the notebook</span>
+jupyter<span class="w"> </span>notebook<span class="w"> </span>einit_examples/visual_tests.ipynb
+</pre></div>
+</div>
+<p><strong>Permutation Invariance Test</strong></p>
+<p>Demonstrates that einit correctly handles randomly permuted point clouds:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>einit_examples/point_reoder_test.py
+</pre></div>
+</div>
+<p>This script shows that einit’s ellipsoid-based approach is robust to point ordering changes, achieving identical performance whether points are permuted or not.</p>
+<p><strong>Partial Overlap Test</strong></p>
+<p>Tests algorithm robustness with realistic partial overlap scenarios using Stanford bunny data:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>einit_examples/rand_overlap_test.py
+</pre></div>
+</div>
+<p><strong>Bounding Box Overlap Test</strong></p>
+<p>Evaluates performance with geometric bounding box constraints:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>einit_examples/bbox_overlap_test.py
+</pre></div>
+</div>
+<p>The notebook includes:</p>
+<ul class="simple">
+<li><p>Interactive visualizations of point cloud alignment</p></li>
+<li><p>Step-by-step algorithm walkthrough</p></li>
+<li><p>Performance analysis with different geometric shapes (spheres, cubes, Stanford bunny)</p></li>
+<li><p>Timing benchmarks and noise robustness analysis</p></li>
+</ul>
+</section>
+<section id="running-tests">
+<h3>Running Tests<a class="headerlink" href="#running-tests" title="Link to this heading"></a></h3>
+<p>To verify the installation and run comprehensive tests:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Run all tests</span>
+python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>einit_tests/<span class="w"> </span>-v
+
+<span class="c1"># Run specific test categories</span>
+python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>einit_tests/test_einit.py<span class="w"> </span>-v<span class="w">              </span><span class="c1"># Core algorithm tests</span>
+python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>einit_tests/test_integration.py<span class="w"> </span>-v<span class="w">        </span><span class="c1"># Stanford bunny integration test</span>
+
+<span class="c1"># Run individual test functions</span>
+python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>einit_tests/test_einit.py::test_basic_functionality<span class="w"> </span>-v
+python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>einit_tests/test_einit.py::test_identity_transform<span class="w"> </span>-v
+python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>einit_tests/test_einit.py::test_synthetic_shapes_statistical<span class="w"> </span>-v
+python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>einit_tests/test_einit.py::test_bunny_cloud_statistical<span class="w"> </span>-v
+</pre></div>
+</div>
+<p>The test suite includes:</p>
+<ul class="simple">
+<li><p><strong>Core algorithm tests</strong> (<code class="docutils literal notranslate"><span class="pre">test_einit.py</span></code>): Basic functionality, identity transforms, robust statistical analysis on synthetic shapes (spheres and cube surfaces), Stanford bunny dataset validation, noise robustness testing using correlation analysis, and performance scaling verification using log-log regression</p></li>
+<li><p><strong>Integration tests</strong> (<code class="docutils literal notranslate"><span class="pre">test_integration.py</span></code>): Stanford bunny alignment test using the original PLY dataset with partial overlap, noise, and ICP refinement comparison between OpenCV and Open3D methods</p></li>
+</ul>
+<p>The tests use advanced statistical validation methods:</p>
+<ul class="simple">
+<li><p><strong>Noise robustness</strong>: Verifies that RMSE grows approximately linearly with noise level using correlation coefficients (r &gt; 0.7) rather than hard thresholds</p></li>
+<li><p><strong>Performance scaling</strong>: Uses log-log regression to verify sub-quadratic time complexity (O(n^α) where α &lt; 2.0) across different point cloud sizes</p></li>
+<li><p><strong>Robust testing</strong>: Uses statistical repetition with configurable failure thresholds to handle inherent randomness in point cloud generation</p></li>
+</ul>
+<p>Test results provide detailed statistics including success rates, RMSE distributions, transform errors, correlation analysis, scaling exponents, and performance timing for different geometric shapes and real-world data.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="api.html" class="btn btn-neutral float-left" title="API Reference" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="integration.html" class="btn btn-neutral float-right" title="OpenCV Integration" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Alexander Kolpakov (UATX), Michael Werman (HUJI), Judah Levin (UATX).</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

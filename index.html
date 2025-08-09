@@ -1,0 +1,283 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>einit: Fast and Robust Ellipsoid ICP Initialization &mdash; einit 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=01f34227"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "displayMath": [["$$", "$$"], ["\\[", "\\]"]]}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Algorithm Details" href="algorithm.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="#" class="icon icon-home">
+            einit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentation:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="algorithm.html">Algorithm Details</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="integration.html">OpenCV Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="integration.html#integration-with-other-libraries">Integration with Other Libraries</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">einit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="#" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">einit: Fast and Robust Ellipsoid ICP Initialization</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="einit-fast-and-robust-ellipsoid-icp-initialization">
+<h1>einit: Fast and Robust Ellipsoid ICP Initialization<a class="headerlink" href="#einit-fast-and-robust-ellipsoid-icp-initialization" title="Link to this heading"></a></h1>
+<a class="reference external image-reference" href="https://pypi.org/project/einit/"><img alt="PyPI version" src="https://img.shields.io/pypi/v/einit.svg" />
+</a>
+<a class="reference external image-reference" href="https://opensource.org/licenses/MIT"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-blue.svg" />
+</a>
+<p><strong>einit</strong> is a Python library that provides fast and robust initialization for Iterative Closest Point (ICP) algorithms using ellipsoid analysis. It computes optimal initial transformations between 3D point clouds by analyzing their ellipsoids of inertia.</p>
+<section id="features">
+<h2>Features<a class="headerlink" href="#features" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>Fast Initialization</strong>: Compute initial transformations in milliseconds</p></li>
+<li><p><strong>Robust Algorithm</strong>: Handles various point cloud shapes (spheres, ellipsoids, general shapes)</p></li>
+<li><p><strong>OpenCV Integration</strong>: Returns standard 4×4 homogeneous transformation matrices</p></li>
+<li><p><strong>Noise Tolerance</strong>: Maintains performance even with significant noise</p></li>
+<li><p><strong>Partial Overlap</strong>: Works with incomplete point cloud correspondences</p></li>
+</ul>
+</section>
+<section id="quick-start">
+<h2>Quick Start<a class="headerlink" href="#quick-start" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">einit</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_ellipsoid</span>
+
+<span class="c1"># Create source and destination point clouds</span>
+<span class="n">src_points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<span class="n">dst_points</span> <span class="o">=</span> <span class="n">src_points</span> <span class="o">@</span> <span class="n">R</span> <span class="o">+</span> <span class="n">t</span>  <span class="c1"># Apply some transformation</span>
+
+<span class="c1"># Compute initial transformation</span>
+<span class="n">T_init</span> <span class="o">=</span> <span class="n">register_ellipsoid</span><span class="p">(</span><span class="n">src_points</span><span class="p">,</span> <span class="n">dst_points</span><span class="p">)</span>
+
+<span class="c1"># T_init is a 4×4 homogeneous transformation matrix</span>
+<span class="c1"># Compatible with OpenCV and other computer vision libraries</span>
+</pre></div>
+</div>
+</section>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h2>
+<p>Install directly from GitHub:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>git+https://github.com/sashakolpakov/einit.git
+</pre></div>
+</div>
+<p>For development or testing:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;git+https://github.com/sashakolpakov/einit.git[test]&quot;</span><span class="w">  </span><span class="c1"># Includes matplotlib, pytest</span>
+pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;git+https://github.com/sashakolpakov/einit.git[all]&quot;</span><span class="w">   </span><span class="c1"># Everything including docs</span>
+</pre></div>
+</div>
+<p>Or clone and install locally:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/sashakolpakov/einit.git
+<span class="nb">cd</span><span class="w"> </span>einit
+pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.<span class="o">[</span>test<span class="o">]</span><span class="w">  </span><span class="c1"># Editable install with test dependencies</span>
+</pre></div>
+</div>
+<p>Requirements:
+- Python ≥ 3.6
+- NumPy ≥ 1.15
+- SciPy ≥ 1.0</p>
+</section>
+<section id="contents">
+<h2>Contents<a class="headerlink" href="#contents" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Documentation:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="algorithm.html">Algorithm Details</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="algorithm.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="algorithm.html#step-by-step-breakdown">Step-by-Step Breakdown</a></li>
+<li class="toctree-l2"><a class="reference internal" href="algorithm.html#mathematical-properties">Mathematical Properties</a></li>
+<li class="toctree-l2"><a class="reference internal" href="algorithm.html#applications-and-use-cases">Applications and Use Cases</a></li>
+<li class="toctree-l2"><a class="reference internal" href="algorithm.html#implementation-notes">Implementation Notes</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api.html#einit.einit.register_ellipsoid"><code class="docutils literal notranslate"><span class="pre">register_ellipsoid()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#einit.einit.barycentered"><code class="docutils literal notranslate"><span class="pre">barycentered()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#basic-usage">Basic Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#integration-with-opencv">Integration with OpenCV</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#real-world-data">Real-World Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#visualization">Visualization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#running-examples-and-tests">Running Examples and Tests</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="integration.html">OpenCV Integration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="integration.html#transformation-matrix-format">Transformation Matrix Format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="integration.html#common-integration-patterns">Common Integration Patterns</a></li>
+<li class="toctree-l2"><a class="reference internal" href="integration.html#performance-optimization">Performance Optimization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="integration.html#error-handling">Error Handling</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="integration.html#integration-with-other-libraries">Integration with Other Libraries</a></li>
+</ul>
+</div>
+</section>
+<section id="algorithm-overview">
+<h2>Algorithm Overview<a class="headerlink" href="#algorithm-overview" title="Link to this heading"></a></h2>
+<p>The ellipsoid initialization algorithm works by:</p>
+<ol class="arabic simple">
+<li><p><strong>Centering</strong>: Both point clouds are centered at their respective centroids</p></li>
+<li><p><strong>Ellipsoids of Inertia</strong>: Computes ellipsoid matrices and their eigendecompositions</p></li>
+<li><p><strong>Axis Alignment</strong>: Searches through all 8 possible axis orientations (±1 reflections)</p></li>
+<li><p><strong>Optimization</strong>: Selects the transformation that minimizes alignment error</p></li>
+<li><p><strong>Output</strong>: Returns a 4×4 homogeneous transformation matrix</p></li>
+</ol>
+</section>
+<section id="mathematical-foundation">
+<h2>Mathematical Foundation<a class="headerlink" href="#mathematical-foundation" title="Link to this heading"></a></h2>
+<p>Given source points <span class="math notranslate nohighlight">\(P = \{p_1, p_2, \ldots, p_n\}\)</span> and destination points <span class="math notranslate nohighlight">\(Q = \{q_1, q_2, \ldots, q_m\}\)</span>, the algorithm:</p>
+<ol class="arabic">
+<li><p>Centers the point clouds:</p>
+<div class="math notranslate nohighlight">
+\[\bar{p} = \frac{1}{n}\sum_{i=1}^n p_i, \quad \bar{q} = \frac{1}{m}\sum_{j=1}^m q_j\]</div>
+<div class="math notranslate nohighlight">
+\[P_c = P - \bar{p}, \quad Q_c = Q - \bar{q}\]</div>
+</li>
+<li><p>Computes covariance matrices:</p>
+<div class="math notranslate nohighlight">
+\[E_P = P_c^T P_c, \quad E_Q = Q_c^T Q_c\]</div>
+</li>
+<li><p>Performs eigendecomposition:</p>
+<div class="math notranslate nohighlight">
+\[E_P = U_P \Lambda_P U_P^T, \quad E_Q = U_Q \Lambda_Q U_Q^T\]</div>
+</li>
+<li><p>Finds optimal rotation through reflection search:</p>
+<div class="math notranslate nohighlight">
+\[R^* = \arg\min_{D \in \{\pm 1\}^{3 \times 3}} \|Q_c - R P_c\|_F\]</div>
+</li>
+</ol>
+<p>where <span class="math notranslate nohighlight">\(R = U_Q D U_P^T\)</span> and <span class="math notranslate nohighlight">\(D\)</span> is a diagonal matrix with ±1 entries.</p>
+</section>
+<section id="performance-characteristics">
+<h2>Performance Characteristics<a class="headerlink" href="#performance-characteristics" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>Time Complexity</strong>: O(n) where n is the number of points</p></li>
+<li><p><strong>Space Complexity</strong>: O(1) additional memory</p></li>
+<li><p><strong>Typical Runtime</strong>: &lt; 1ms for 1000 points</p></li>
+<li><p><strong>Convergence</strong>: Non-iterative, deterministic result</p></li>
+</ul>
+<section id="benchmark-results">
+<h3>Benchmark Results<a class="headerlink" href="#benchmark-results" title="Link to this heading"></a></h3>
+<p>Real-world performance with 2% noise and 80% overlap:</p>
+<ul class="simple">
+<li><p><strong>Sphere (500 points)</strong>: RMSE 0.017 ± 0.014</p></li>
+<li><p><strong>Cube (1728 points)</strong>: RMSE 0.002 ± 0.001</p></li>
+<li><p><strong>Stanford Bunny (1000 points)</strong>: RMSE 0.004 ± 0.001</p></li>
+</ul>
+<p>The algorithm often <strong>outperforms traditional ICP refinement</strong>, providing excellent results without iteration.</p>
+</section>
+</section>
+<section id="use-cases">
+<h2>Use Cases<a class="headerlink" href="#use-cases" title="Link to this heading"></a></h2>
+<p><strong>Computer Vision</strong>
+- Point cloud registration
+- 3D object alignment
+- Structure from motion
+- SLAM applications</p>
+<p><strong>Robotics</strong>
+- Sensor fusion
+- Object pose estimation
+- Navigation and mapping</p>
+<p><strong>Scientific Computing</strong>
+- Molecular alignment
+- Geometric analysis
+- Shape matching</p>
+</section>
+</section>
+<section id="indices-and-tables">
+<h1>Indices and Tables<a class="headerlink" href="#indices-and-tables" title="Link to this heading"></a></h1>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="algorithm.html" class="btn btn-neutral float-right" title="Algorithm Details" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Alexander Kolpakov (UATX), Michael Werman (HUJI), Judah Levin (UATX).</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -206,8 +206,25 @@ This work is supported by the Google Cloud Research Award number GCP19980904.
 
 ## Citation
 
-Based on the original paper by Kolpakov and Werman:
+If you use this work, please cite the paper below.
+
+**BibTeX:**
+```bibtex
+@article{kolpakov2023approach,
+  title={An Approach to Robust ICP Initialization},
+  author={Kolpakov, Alexander and Werman, Michael},
+  journal={IEEE Transactions on Pattern Analysis and Machine Intelligence},
+  volume={45},
+  number={10},
+  pages={12685--12691},
+  year={2023},
+  publisher={IEEE},
+  doi={10.1109/TPAMI.2023.3287468},
+  url={https://ieeexplore.ieee.org/document/10155262}
+}
+```
+
+**APA:**
+Kolpakov, A., & Werman, M. (2023). An Approach to Robust ICP Initialization. *IEEE Transactions on Pattern Analysis and Machine Intelligence*, 45(10), 12685-12691. https://doi.org/10.1109/TPAMI.2023.3287468
 
 [![Paper](https://img.shields.io/badge/arXiv-read%20PDF-b31b1b.svg)](https://arxiv.org/abs/2212.05332)
-
-*"An approach to robust ICP initialization"*

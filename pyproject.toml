@@ -1,0 +1,72 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "einit"
+version = "0.2.0"
+description = "Ellipsoid ICP initialization for OpenCV-compatible pipelines"
+readme = "README.md"
+requires-python = ">=3.6"
+license = {text = "MIT"}
+authors = [
+    {name = "Alexander Kolpakov", email = "akolpakov@uaustin.org"},
+    {name = "Michael Werman", email = "werman@cs.huji.ac.il"},
+    {name = "Judah Levin", email = "judah.levin@utexas.edu"},
+]
+maintainers = [
+    {name = "Alexander Kolpakov", email = "akolpakov@uaustin.org"},
+]
+keywords = ["computer-vision", "point-cloud", "registration", "icp", "3d-alignment", "ellipsoid"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Image Processing",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+dependencies = [
+    "numpy>=1.15",
+    "scipy>=1.0",
+]
+
+[project.optional-dependencies]
+opencv = ["opencv-python-headless>=3.4"]
+test = [
+    "pytest>=6.0",
+    "open3d>=0.17",
+    "matplotlib>=3.0",
+    "colorama>=0.4",
+]
+docs = [
+    "sphinx>=4.0",
+    "sphinx_rtd_theme>=1.0",
+]
+all = [
+    "open3d>=0.17",
+    "pytest>=6.0",
+    "matplotlib>=3.0",
+    "sphinx>=4.0",
+    "sphinx_rtd_theme>=1.0",
+    "colorama>=0.4",
+]
+
+[project.urls]
+Homepage = "https://github.com/sashakolpakov/einit"
+Documentation = "https://sashakolpakov.github.io/einit/"
+Repository = "https://github.com/sashakolpakov/einit"
+Issues = "https://github.com/sashakolpakov/einit/issues"
+
+[tool.setuptools]
+packages = ["einit"]

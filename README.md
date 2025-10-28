@@ -15,7 +15,7 @@
     <img src="https://img.shields.io/pypi/v/einit.svg" alt="PyPI"/>
   </a>
   <a href="https://pepy.tech/projects/einit">
-    <img src="https://static.pepy.tech/personalized-badge/einit?period=total&units=ABBREVIATION&left_color=GREY&right_color=BLUE&left_text=downloads" alt="PyPI Downloads">
+    <img alt="Pepy Total Downloads" src="https://img.shields.io/pepy/dt/einit">
   </a>
   <a href="https://github.com/sashakolpakov/einit/actions/workflows/pylint.yml">
     <img src="https://img.shields.io/github/actions/workflow/status/sashakolpakov/einit/pylint.yml?branch=main&label=CI&logo=github" alt="CI"/>

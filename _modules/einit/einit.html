@@ -1,0 +1,293 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>einit.einit &mdash; einit 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            einit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentation:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../algorithm.html">Algorithm Details</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../integration.html">OpenCV Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../integration.html#integration-with-other-libraries">Integration with Other Libraries</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">einit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">einit.einit</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for einit.einit</h1><div class="highlight"><pre>
+<span></span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">einit – Ellipsoid ICP initialization</span>
+
+<span class="sd">Provides register_ellipsoid(src, dst) that:</span>
+<span class="sd"> 1. Centers src &amp; dst by their centroids.</span>
+<span class="sd"> 2. Computes ellipsoid matrices; eigen-decomposes to get principal axes.</span>
+<span class="sd"> 3. Searches all 8 diagonal ±1 reflections for best alignment.</span>
+<span class="sd"> 4. Returns a 4×4 homogeneous transform for OpenCV.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.spatial</span><span class="w"> </span><span class="kn">import</span> <span class="n">cKDTree</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;register_ellipsoid&quot;</span><span class="p">,</span> <span class="s2">&quot;barycentered&quot;</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="barycentered">
+<a class="viewcode-back" href="../../api.html#einit.einit.barycentered">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">barycentered</span><span class="p">(</span><span class="n">points</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Center point cloud around barycenter (N×3 format)&quot;&quot;&quot;</span>
+    <span class="n">centroid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">points</span> <span class="o">-</span> <span class="n">centroid</span></div>
+
+
+
+<div class="viewcode-block" id="register_ellipsoid">
+<a class="viewcode-back" href="../../api.html#einit.einit.register_ellipsoid">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">register_ellipsoid</span><span class="p">(</span><span class="n">src_points</span><span class="p">,</span> <span class="n">dst_points</span><span class="p">,</span> <span class="n">max_correspondence_distance</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                      <span class="n">min_inlier_fraction</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">leafsize</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">positive_only</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute initial transformation between 3D point clouds using ellipsoid analysis.</span>
+<span class="sd">    </span>
+<span class="sd">    This function computes an initial rigid transformation that aligns the source </span>
+<span class="sd">    point cloud with the destination point cloud by analyzing their ellipsoids of </span>
+<span class="sd">    inertia. The algorithm uses KD-tree correspondence recovery to handle point </span>
+<span class="sd">    clouds with different orderings, partial overlaps, and outliers.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    src_points : array_like, shape (N, 3)</span>
+<span class="sd">        Source point cloud as N×3 array of 3D coordinates.</span>
+<span class="sd">    dst_points : array_like, shape (M, 3)</span>
+<span class="sd">        Destination point cloud as M×3 array of 3D coordinates.</span>
+<span class="sd">        N and M can be different (partial overlap).</span>
+<span class="sd">    max_correspondence_distance : float, optional</span>
+<span class="sd">        Maximum distance for valid point correspondences. Points farther than</span>
+<span class="sd">        this distance from their nearest neighbors are considered outliers.</span>
+<span class="sd">        If None (default), automatically estimated as 3× the median nearest-</span>
+<span class="sd">        neighbor distance within the destination point cloud.</span>
+<span class="sd">    min_inlier_fraction : float, default 0.5</span>
+<span class="sd">        Minimum fraction of source points that must have valid correspondences</span>
+<span class="sd">        within max_correspondence_distance. Transformations with fewer inliers</span>
+<span class="sd">        are rejected. Must be between 0 and 1.</span>
+<span class="sd">    leafsize : int, default 16</span>
+<span class="sd">        KD-tree leaf size parameter. Affects search performance vs memory usage.</span>
+<span class="sd">        Smaller values may improve accuracy for small point clouds but increase</span>
+<span class="sd">        build time. Typical range: 8-32.</span>
+<span class="sd">    positive_only : bool, default False</span>
+<span class="sd">        If True, only search proper rotations (determinant +1) by considering</span>
+<span class="sd">        only sign combinations with an even number of negative values. This</span>
+<span class="sd">        prevents reflections and ensures chirality preservation. Recommended</span>
+<span class="sd">        when point distributions are spatially biased (e.g., bounding box overlap).</span>
+<span class="sd">    </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    T : ndarray, shape (4, 4)</span>
+<span class="sd">        Homogeneous transformation matrix that transforms src_points to align</span>
+<span class="sd">        with dst_points. Apply as: dst_aligned = (src @ T[:3,:3].T) + T[:3,3]</span>
+<span class="sd">    </span>
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If input arrays don&#39;t have shape (N, 3) or (M, 3).</span>
+<span class="sd">    </span>
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    Basic usage:</span>
+<span class="sd">    </span>
+<span class="sd">    &gt;&gt;&gt; import numpy as np</span>
+<span class="sd">    &gt;&gt;&gt; from einit import register_ellipsoid</span>
+<span class="sd">    &gt;&gt;&gt; src = np.random.randn(100, 3)</span>
+<span class="sd">    &gt;&gt;&gt; dst = np.random.randn(80, 3)  # Different size OK</span>
+<span class="sd">    &gt;&gt;&gt; T = register_ellipsoid(src, dst)</span>
+<span class="sd">    &gt;&gt;&gt; T.shape</span>
+<span class="sd">    (4, 4)</span>
+<span class="sd">    </span>
+<span class="sd">    With custom parameters:</span>
+<span class="sd">    </span>
+<span class="sd">    &gt;&gt;&gt; T = register_ellipsoid(</span>
+<span class="sd">    ...     src, dst,</span>
+<span class="sd">    ...     max_correspondence_distance=0.1,</span>
+<span class="sd">    ...     min_inlier_fraction=0.7,</span>
+<span class="sd">    ...     leafsize=8,</span>
+<span class="sd">    ...     positive_only=True</span>
+<span class="sd">    ... )</span>
+<span class="sd">    </span>
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The algorithm is permutation-invariant: point ordering in the input arrays</span>
+<span class="sd">    does not affect the result. It handles partial overlaps, noise, and outliers</span>
+<span class="sd">    through KD-tree correspondence recovery and distance-based filtering.</span>
+<span class="sd">    </span>
+<span class="sd">    Time complexity is O(N + M log M) where N and M are the number of points</span>
+<span class="sd">    in the source and destination clouds respectively.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">src_points</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">src_points</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;src_points must be (N,3) array&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">dst_points</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">dst_points</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;dst_points must be (N,3) array&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Center point clouds</span>
+    <span class="n">centroid_src</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">src_points</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">centroid_dst</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dst_points</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">P_centered</span> <span class="o">=</span> <span class="n">src_points</span> <span class="o">-</span> <span class="n">centroid_src</span>  <span class="c1"># N x 3</span>
+    <span class="n">Q_centered</span> <span class="o">=</span> <span class="n">dst_points</span> <span class="o">-</span> <span class="n">centroid_dst</span>  <span class="c1"># N x 3</span>
+
+    <span class="c1"># Compute ellipsoid matrices and eigendecompose</span>
+    <span class="n">Ep</span> <span class="o">=</span> <span class="n">P_centered</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">P_centered</span>  <span class="c1"># 3 x 3</span>
+    <span class="n">Eq</span> <span class="o">=</span> <span class="n">Q_centered</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">Q_centered</span>  <span class="c1"># 3 x 3</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">Up</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eigh</span><span class="p">(</span><span class="n">Ep</span><span class="p">)</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">Uq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eigh</span><span class="p">(</span><span class="n">Eq</span><span class="p">)</span>
+
+    <span class="c1"># Initial transformation</span>
+    <span class="n">U0</span> <span class="o">=</span> <span class="n">Uq</span> <span class="o">@</span> <span class="n">Up</span><span class="o">.</span><span class="n">T</span>
+
+    <span class="c1"># Determine correspondence distance threshold if not provided</span>
+    <span class="k">if</span> <span class="n">max_correspondence_distance</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Estimate typical point spacing in target cloud</span>
+        <span class="n">sample_size</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="n">Q_centered</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">sample_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">Q_centered</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">sample_size</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">temp_tree</span> <span class="o">=</span> <span class="n">cKDTree</span><span class="p">(</span><span class="n">Q_centered</span><span class="p">[</span><span class="n">sample_idx</span><span class="p">],</span> <span class="n">leafsize</span><span class="o">=</span><span class="n">leafsize</span><span class="p">)</span>
+        <span class="n">sample_distances</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">temp_tree</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">Q_centered</span><span class="p">[</span><span class="n">sample_idx</span><span class="p">],</span> <span class="n">k</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">median_spacing</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">sample_distances</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span>
+        <span class="n">max_correspondence_distance</span> <span class="o">=</span> <span class="mf">3.0</span> <span class="o">*</span> <span class="n">median_spacing</span>
+    <span class="c1"># Search discrete isometries for best alignment</span>
+    <span class="c1"># Use KD-tree for efficient nearest neighbor search to recover correspondences</span>
+    <span class="n">best_error</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+    <span class="n">best_transform</span> <span class="o">=</span> <span class="n">U0</span>
+    <span class="n">best_inlier_count</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="c1"># Build KD-tree for target points with specified leaf size</span>
+    <span class="n">kdtree</span> <span class="o">=</span> <span class="n">cKDTree</span><span class="p">(</span><span class="n">Q_centered</span><span class="p">,</span> <span class="n">leafsize</span><span class="o">=</span><span class="n">leafsize</span><span class="p">)</span>
+    <span class="c1"># Choose sign combinations based on positive_only parameter</span>
+    <span class="k">if</span> <span class="n">positive_only</span><span class="p">:</span>
+        <span class="c1"># Determine which parity of negative signs gives positive determinant</span>
+        <span class="n">base_det</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">det</span><span class="p">(</span><span class="n">Uq</span> <span class="o">@</span> <span class="n">Up</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">base_det</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># Need even number of negative signs</span>
+            <span class="n">sign_combinations</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Need odd number of negative signs</span>
+            <span class="n">sign_combinations</span> <span class="o">=</span> <span class="p">[[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># All 8 isometries (4 proper rotations + 4 reflections)</span>
+        <span class="n">sign_combinations</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+                           <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
+    <span class="k">for</span> <span class="n">signs</span> <span class="ow">in</span> <span class="n">sign_combinations</span><span class="p">:</span>
+        <span class="n">D</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">signs</span><span class="p">)</span>
+        <span class="n">U</span> <span class="o">=</span> <span class="n">Uq</span> <span class="o">@</span> <span class="n">D</span> <span class="o">@</span> <span class="n">Up</span><span class="o">.</span><span class="n">T</span>
+        <span class="n">P_transformed</span> <span class="o">=</span> <span class="n">P_centered</span> <span class="o">@</span> <span class="n">U</span><span class="o">.</span><span class="n">T</span>
+        <span class="c1"># Find nearest neighbors to establish correspondence</span>
+        <span class="n">distances</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">kdtree</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">P_transformed</span><span class="p">)</span>
+
+        <span class="c1"># Filter correspondences by distance threshold</span>
+        <span class="n">valid_mask</span> <span class="o">=</span> <span class="n">distances</span> <span class="o">&lt;=</span> <span class="n">max_correspondence_distance</span>
+        <span class="n">inlier_count</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">valid_mask</span><span class="p">)</span>
+        <span class="n">inlier_fraction</span> <span class="o">=</span> <span class="n">inlier_count</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">distances</span><span class="p">)</span>
+        <span class="c1"># Skip if too few valid correspondences</span>
+        <span class="k">if</span> <span class="n">inlier_fraction</span> <span class="o">&lt;</span> <span class="n">min_inlier_fraction</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="c1"># Compute error using only valid correspondences</span>
+        <span class="k">if</span> <span class="n">inlier_count</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">valid_distances</span> <span class="o">=</span> <span class="n">distances</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">]</span>
+            <span class="n">error</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">valid_distances</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+            <span class="c1"># Prefer solutions with more inliers, then lower error</span>
+            <span class="n">is_better</span> <span class="o">=</span> <span class="p">(</span><span class="n">inlier_count</span> <span class="o">&gt;</span> <span class="n">best_inlier_count</span> <span class="ow">or</span>
+                        <span class="p">(</span><span class="n">inlier_count</span> <span class="o">==</span> <span class="n">best_inlier_count</span> <span class="ow">and</span> <span class="n">error</span> <span class="o">&lt;</span> <span class="n">best_error</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">is_better</span><span class="p">:</span>
+                <span class="n">best_error</span> <span class="o">=</span> <span class="n">error</span>
+                <span class="n">best_transform</span> <span class="o">=</span> <span class="n">U</span>
+                <span class="n">best_inlier_count</span> <span class="o">=</span> <span class="n">inlier_count</span>
+
+    <span class="c1"># Pack into 4×4 homogeneous transform</span>
+    <span class="n">T</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">best_transform</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="n">T</span><span class="p">[:</span><span class="mi">3</span><span class="p">,</span> <span class="p">:</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">best_transform</span>
+    <span class="n">T</span><span class="p">[:</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">centroid_dst</span> <span class="o">-</span> <span class="n">best_transform</span> <span class="o">@</span> <span class="n">centroid_src</span>
+    <span class="k">return</span> <span class="n">T</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Alexander Kolpakov (UATX), Michael Werman (HUJI), Judah Levin (UATX).</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

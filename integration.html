@@ -1,0 +1,352 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OpenCV Integration &mdash; einit 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=01f34227"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Examples" href="examples.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            einit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentation:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="algorithm.html">Algorithm Details</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">OpenCV Integration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#transformation-matrix-format">Transformation Matrix Format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#common-integration-patterns">Common Integration Patterns</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#icp-initialization">ICP Initialization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ransac-integration">RANSAC Integration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#multi-scale-processing">Multi-Scale Processing</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#performance-optimization">Performance Optimization</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#preprocessing-for-speed">Preprocessing for Speed</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#batch-processing">Batch Processing</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#error-handling">Error Handling</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#robust-error-checking">Robust Error Checking</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="#integration-with-other-libraries">Integration with Other Libraries</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">einit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">OpenCV Integration</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/integration.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="opencv-integration">
+<h1>OpenCV Integration<a class="headerlink" href="#opencv-integration" title="Link to this heading"></a></h1>
+<p>The einit library is designed to work seamlessly with OpenCV and other computer vision libraries. This section covers integration patterns and best practices.</p>
+<section id="transformation-matrix-format">
+<h2>Transformation Matrix Format<a class="headerlink" href="#transformation-matrix-format" title="Link to this heading"></a></h2>
+<p>einit returns standard 4×4 homogeneous transformation matrices:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">T</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
+    <span class="p">[</span><span class="n">R11</span><span class="p">,</span> <span class="n">R12</span><span class="p">,</span> <span class="n">R13</span><span class="p">,</span> <span class="n">tx</span><span class="p">],</span>
+    <span class="p">[</span><span class="n">R21</span><span class="p">,</span> <span class="n">R22</span><span class="p">,</span> <span class="n">R23</span><span class="p">,</span> <span class="n">ty</span><span class="p">],</span>
+    <span class="p">[</span><span class="n">R31</span><span class="p">,</span> <span class="n">R32</span><span class="p">,</span> <span class="n">R33</span><span class="p">,</span> <span class="n">tz</span><span class="p">],</span>
+    <span class="p">[</span><span class="mi">0</span><span class="p">,</span>   <span class="mi">0</span><span class="p">,</span>   <span class="mi">0</span><span class="p">,</span>   <span class="mi">1</span> <span class="p">]</span>
+<span class="p">])</span>
+</pre></div>
+</div>
+<p>This format is directly compatible with:
+- OpenCV’s 3D functions
+- Open3D transformations
+- PCL (Point Cloud Library)
+- Standard robotics libraries</p>
+</section>
+<section id="common-integration-patterns">
+<h2>Common Integration Patterns<a class="headerlink" href="#common-integration-patterns" title="Link to this heading"></a></h2>
+<section id="icp-initialization">
+<h3>ICP Initialization<a class="headerlink" href="#icp-initialization" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">cv2</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">einit</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_ellipsoid</span>
+
+<span class="c1"># 1. Get initial transformation with einit</span>
+<span class="n">T_init</span> <span class="o">=</span> <span class="n">register_ellipsoid</span><span class="p">(</span><span class="n">src_points</span><span class="p">,</span> <span class="n">dst_points</span><span class="p">)</span>
+
+<span class="c1"># 2. Apply initial transformation</span>
+<span class="n">src_aligned</span> <span class="o">=</span> <span class="n">apply_transform</span><span class="p">(</span><span class="n">src_points</span><span class="p">,</span> <span class="n">T_init</span><span class="p">)</span>
+
+<span class="c1"># 3. Refine with OpenCV ICP</span>
+<span class="n">retval</span><span class="p">,</span> <span class="n">T_refine</span><span class="p">,</span> <span class="n">inliers</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">estimateAffine3D</span><span class="p">(</span>
+    <span class="n">src_aligned</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+    <span class="n">dst_points</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+    <span class="n">confidence</span><span class="o">=</span><span class="mf">0.99</span><span class="p">,</span>
+    <span class="n">ransacThreshold</span><span class="o">=</span><span class="mf">0.01</span>
+<span class="p">)</span>
+
+<span class="c1"># 4. Combine transformations</span>
+<span class="k">if</span> <span class="n">retval</span><span class="p">:</span>
+    <span class="n">T_final</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+    <span class="n">T_final</span><span class="p">[:</span><span class="mi">3</span><span class="p">,</span> <span class="p">:</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="n">T_refine</span>
+    <span class="n">T_complete</span> <span class="o">=</span> <span class="n">T_final</span> <span class="o">@</span> <span class="n">T_init</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">T_complete</span> <span class="o">=</span> <span class="n">T_init</span>
+</pre></div>
+</div>
+</section>
+<section id="ransac-integration">
+<h3>RANSAC Integration<a class="headerlink" href="#ransac-integration" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">robust_alignment</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">,</span> <span class="n">max_iterations</span><span class="o">=</span><span class="mi">1000</span><span class="p">):</span>
+    <span class="n">best_T</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">best_inliers</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_iterations</span><span class="p">):</span>
+        <span class="c1"># Sample subset of points</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">src</span><span class="p">),</span> <span class="nb">min</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">src</span><span class="p">)),</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">src_sample</span> <span class="o">=</span> <span class="n">src</span><span class="p">[</span><span class="n">indices</span><span class="p">]</span>
+        <span class="n">dst_sample</span> <span class="o">=</span> <span class="n">dst</span><span class="p">[</span><span class="n">indices</span><span class="p">]</span>
+
+        <span class="c1"># Get transformation</span>
+        <span class="n">T_candidate</span> <span class="o">=</span> <span class="n">register_ellipsoid</span><span class="p">(</span><span class="n">src_sample</span><span class="p">,</span> <span class="n">dst_sample</span><span class="p">)</span>
+
+        <span class="c1"># Evaluate on full dataset</span>
+        <span class="n">aligned</span> <span class="o">=</span> <span class="n">apply_transform</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">T_candidate</span><span class="p">)</span>
+        <span class="n">distances</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">aligned</span> <span class="o">-</span> <span class="n">dst</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">inliers</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">distances</span> <span class="o">&lt;</span> <span class="n">threshold</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">inliers</span> <span class="o">&gt;</span> <span class="n">best_inliers</span><span class="p">:</span>
+            <span class="n">best_inliers</span> <span class="o">=</span> <span class="n">inliers</span>
+            <span class="n">best_T</span> <span class="o">=</span> <span class="n">T_candidate</span>
+
+    <span class="k">return</span> <span class="n">best_T</span>
+</pre></div>
+</div>
+</section>
+<section id="multi-scale-processing">
+<h3>Multi-Scale Processing<a class="headerlink" href="#multi-scale-processing" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">multiscale_alignment</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">,</span> <span class="n">scales</span><span class="o">=</span><span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">]):</span>
+    <span class="n">T_cumulative</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">scale</span> <span class="ow">in</span> <span class="n">scales</span><span class="p">:</span>
+        <span class="c1"># Downsample point clouds</span>
+        <span class="n">n_points</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">src</span><span class="p">)</span> <span class="o">*</span> <span class="n">scale</span><span class="p">)</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">src</span><span class="p">),</span> <span class="n">n_points</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="n">src_scale</span> <span class="o">=</span> <span class="n">src</span><span class="p">[</span><span class="n">indices</span><span class="p">]</span>
+        <span class="n">dst_scale</span> <span class="o">=</span> <span class="n">dst</span><span class="p">[</span><span class="n">indices</span><span class="p">]</span>
+
+        <span class="c1"># Apply current transformation</span>
+        <span class="n">src_transformed</span> <span class="o">=</span> <span class="n">apply_transform</span><span class="p">(</span><span class="n">src_scale</span><span class="p">,</span> <span class="n">T_cumulative</span><span class="p">)</span>
+
+        <span class="c1"># Compute refinement</span>
+        <span class="n">T_delta</span> <span class="o">=</span> <span class="n">register_ellipsoid</span><span class="p">(</span><span class="n">src_transformed</span><span class="p">,</span> <span class="n">dst_scale</span><span class="p">)</span>
+        <span class="n">T_cumulative</span> <span class="o">=</span> <span class="n">T_delta</span> <span class="o">@</span> <span class="n">T_cumulative</span>
+
+    <span class="k">return</span> <span class="n">T_cumulative</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="performance-optimization">
+<h2>Performance Optimization<a class="headerlink" href="#performance-optimization" title="Link to this heading"></a></h2>
+<section id="preprocessing-for-speed">
+<h3>Preprocessing for Speed<a class="headerlink" href="#preprocessing-for-speed" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">preprocess_for_alignment</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">target_size</span><span class="o">=</span><span class="mi">1000</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Downsample and clean point cloud for faster processing.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">points</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">target_size</span><span class="p">:</span>
+        <span class="c1"># Uniform downsampling</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">points</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">target_size</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">points</span> <span class="o">=</span> <span class="n">points</span><span class="p">[</span><span class="n">indices</span><span class="p">]</span>
+
+    <span class="c1"># Remove outliers (optional)</span>
+    <span class="n">centroid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">distances</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">points</span> <span class="o">-</span> <span class="n">centroid</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">threshold</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">distances</span><span class="p">,</span> <span class="mi">95</span><span class="p">)</span>  <span class="c1"># Keep 95% of points</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">distances</span> <span class="o">&lt;=</span> <span class="n">threshold</span>
+
+    <span class="k">return</span> <span class="n">points</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+</pre></div>
+</div>
+</section>
+<section id="batch-processing">
+<h3>Batch Processing<a class="headerlink" href="#batch-processing" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">batch_align_clouds</span><span class="p">(</span><span class="n">src_clouds</span><span class="p">,</span> <span class="n">dst_clouds</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Align multiple point cloud pairs efficiently.&quot;&quot;&quot;</span>
+    <span class="n">transformations</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">src</span><span class="p">,</span> <span class="n">dst</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">src_clouds</span><span class="p">,</span> <span class="n">dst_clouds</span><span class="p">):</span>
+        <span class="c1"># Preprocess for consistency</span>
+        <span class="n">src_clean</span> <span class="o">=</span> <span class="n">preprocess_for_alignment</span><span class="p">(</span><span class="n">src</span><span class="p">)</span>
+        <span class="n">dst_clean</span> <span class="o">=</span> <span class="n">preprocess_for_alignment</span><span class="p">(</span><span class="n">dst</span><span class="p">)</span>
+
+        <span class="c1"># Compute transformation</span>
+        <span class="n">T</span> <span class="o">=</span> <span class="n">register_ellipsoid</span><span class="p">(</span><span class="n">src_clean</span><span class="p">,</span> <span class="n">dst_clean</span><span class="p">)</span>
+        <span class="n">transformations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">T</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">transformations</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="error-handling">
+<h2>Error Handling<a class="headerlink" href="#error-handling" title="Link to this heading"></a></h2>
+<section id="robust-error-checking">
+<h3>Robust Error Checking<a class="headerlink" href="#robust-error-checking" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">safe_alignment</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="s1">&#39;identity&#39;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Perform alignment with comprehensive error handling.&quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="c1"># Input validation</span>
+        <span class="k">if</span> <span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">4</span> <span class="ow">or</span> <span class="n">dst</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">4</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Need at least 4 points for alignment&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">src</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">dst</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Source and destination must have same shape&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Compute transformation</span>
+        <span class="n">T</span> <span class="o">=</span> <span class="n">register_ellipsoid</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">)</span>
+
+        <span class="c1"># Validate result</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">T</span><span class="p">[:</span><span class="mi">3</span><span class="p">,</span> <span class="p">:</span><span class="mi">3</span><span class="p">]</span> <span class="o">@</span> <span class="n">T</span><span class="p">[:</span><span class="mi">3</span><span class="p">,</span> <span class="p">:</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Computed rotation matrix is not orthogonal&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">T</span><span class="p">,</span> <span class="kc">True</span>
+
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Alignment failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">fallback</span> <span class="o">==</span> <span class="s1">&#39;identity&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">4</span><span class="p">),</span> <span class="kc">False</span>
+        <span class="k">elif</span> <span class="n">fallback</span> <span class="o">==</span> <span class="s1">&#39;centroid&#39;</span><span class="p">:</span>
+            <span class="c1"># Align centroids only</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dst</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">T</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+            <span class="n">T</span><span class="p">[:</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">t</span>
+            <span class="k">return</span> <span class="n">T</span><span class="p">,</span> <span class="kc">False</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+<section id="integration-with-other-libraries">
+<h1>Integration with Other Libraries<a class="headerlink" href="#integration-with-other-libraries" title="Link to this heading"></a></h1>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">open3d</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">o3d</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">align_with_open3d</span><span class="p">(</span><span class="n">src_pcd</span><span class="p">,</span> <span class="n">dst_pcd</span><span class="p">):</span>
+    <span class="c1"># Convert to numpy arrays</span>
+    <span class="n">src_points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">src_pcd</span><span class="o">.</span><span class="n">points</span><span class="p">)</span>
+    <span class="n">dst_points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">dst_pcd</span><span class="o">.</span><span class="n">points</span><span class="p">)</span>
+
+    <span class="c1"># Get initial transformation</span>
+    <span class="n">T_init</span> <span class="o">=</span> <span class="n">register_ellipsoid</span><span class="p">(</span><span class="n">src_points</span><span class="p">,</span> <span class="n">dst_points</span><span class="p">)</span>
+
+    <span class="c1"># Refine with Open3D ICP</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">o3d</span><span class="o">.</span><span class="n">pipelines</span><span class="o">.</span><span class="n">registration</span><span class="o">.</span><span class="n">registration_icp</span><span class="p">(</span>
+        <span class="n">src_pcd</span><span class="p">,</span> <span class="n">dst_pcd</span><span class="p">,</span>
+        <span class="n">max_correspondence_distance</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+        <span class="n">init</span><span class="o">=</span><span class="n">T_init</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">result</span><span class="o">.</span><span class="n">transformation</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pcl</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">align_with_pcl</span><span class="p">(</span><span class="n">src_cloud</span><span class="p">,</span> <span class="n">dst_cloud</span><span class="p">):</span>
+    <span class="c1"># Extract points</span>
+    <span class="n">src_points</span> <span class="o">=</span> <span class="n">src_cloud</span><span class="o">.</span><span class="n">to_array</span><span class="p">()</span>
+    <span class="n">dst_points</span> <span class="o">=</span> <span class="n">dst_cloud</span><span class="o">.</span><span class="n">to_array</span><span class="p">()</span>
+
+    <span class="c1"># Get initialization</span>
+    <span class="n">T_init</span> <span class="o">=</span> <span class="n">register_ellipsoid</span><span class="p">(</span><span class="n">src_points</span><span class="p">,</span> <span class="n">dst_points</span><span class="p">)</span>
+
+    <span class="c1"># Use PCL&#39;s ICP with initialization</span>
+    <span class="n">icp</span> <span class="o">=</span> <span class="n">src_cloud</span><span class="o">.</span><span class="n">make_IterativeClosestPoint</span><span class="p">()</span>
+    <span class="n">converged</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">estimate</span><span class="p">,</span> <span class="n">fitness</span> <span class="o">=</span> <span class="n">icp</span><span class="o">.</span><span class="n">icp</span><span class="p">(</span><span class="n">dst_cloud</span><span class="p">,</span> <span class="n">T_init</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">transform</span> <span class="k">if</span> <span class="n">converged</span> <span class="k">else</span> <span class="n">T_init</span>
+</pre></div>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="examples.html" class="btn btn-neutral float-left" title="Examples" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Alexander Kolpakov (UATX), Michael Werman (HUJI), Judah Levin (UATX).</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

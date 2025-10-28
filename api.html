@@ -1,0 +1,204 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>API Reference &mdash; einit 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=01f34227"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Examples" href="examples.html" />
+    <link rel="prev" title="Algorithm Details" href="algorithm.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            einit
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentation:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="algorithm.html">Algorithm Details</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#einit.einit.register_ellipsoid"><code class="docutils literal notranslate"><span class="pre">register_ellipsoid()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#einit.einit.barycentered"><code class="docutils literal notranslate"><span class="pre">barycentered()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="integration.html">OpenCV Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="integration.html#integration-with-other-libraries">Integration with Other Libraries</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">einit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">API Reference</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/api.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="api-reference">
+<h1>API Reference<a class="headerlink" href="#api-reference" title="Link to this heading"></a></h1>
+<p>This section provides complete API documentation for the einit library.</p>
+<p id="module-einit.einit">einit – Ellipsoid ICP initialization</p>
+<dl class="simple">
+<dt>Provides register_ellipsoid(src, dst) that:</dt><dd><ol class="arabic simple">
+<li><p>Centers src &amp; dst by their centroids.</p></li>
+<li><p>Computes ellipsoid matrices; eigen-decomposes to get principal axes.</p></li>
+<li><p>Searches all 8 diagonal ±1 reflections for best alignment.</p></li>
+<li><p>Returns a 4×4 homogeneous transform for OpenCV.</p></li>
+</ol>
+</dd>
+</dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="einit.einit.register_ellipsoid">
+<span class="sig-prename descclassname"><span class="pre">einit.einit.</span></span><span class="sig-name descname"><span class="pre">register_ellipsoid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">src_points</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dst_points</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_correspondence_distance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_inlier_fraction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">leafsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">16</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">positive_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/einit/einit.html#register_ellipsoid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#einit.einit.register_ellipsoid" title="Link to this definition"></a></dt>
+<dd><p>Compute initial transformation between 3D point clouds using ellipsoid analysis.</p>
+<p>This function computes an initial rigid transformation that aligns the source
+point cloud with the destination point cloud by analyzing their ellipsoids of
+inertia. The algorithm uses KD-tree correspondence recovery to handle point
+clouds with different orderings, partial overlaps, and outliers.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>src_points</strong> (<em>array_like</em><em>, </em><em>shape</em><em> (</em><em>N</em><em>, </em><em>3</em><em>)</em>) – Source point cloud as N×3 array of 3D coordinates.</p></li>
+<li><p><strong>dst_points</strong> (<em>array_like</em><em>, </em><em>shape</em><em> (</em><em>M</em><em>, </em><em>3</em><em>)</em>) – Destination point cloud as M×3 array of 3D coordinates.
+N and M can be different (partial overlap).</p></li>
+<li><p><strong>max_correspondence_distance</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em>, </em><em>optional</em>) – Maximum distance for valid point correspondences. Points farther than
+this distance from their nearest neighbors are considered outliers.
+If None (default), automatically estimated as 3× the median nearest-
+neighbor distance within the destination point cloud.</p></li>
+<li><p><strong>min_inlier_fraction</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em>, </em><em>default 0.5</em>) – Minimum fraction of source points that must have valid correspondences
+within max_correspondence_distance. Transformations with fewer inliers
+are rejected. Must be between 0 and 1.</p></li>
+<li><p><strong>leafsize</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, </em><em>default 16</em>) – KD-tree leaf size parameter. Affects search performance vs memory usage.
+Smaller values may improve accuracy for small point clouds but increase
+build time. Typical range: 8-32.</p></li>
+<li><p><strong>positive_only</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>default False</em>) – If True, only search proper rotations (determinant +1) by considering
+only sign combinations with an even number of negative values. This
+prevents reflections and ensures chirality preservation. Recommended
+when point distributions are spatially biased (e.g., bounding box overlap).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>T</strong> – Homogeneous transformation matrix that transforms src_points to align
+with dst_points. Apply as: dst_aligned = (src &#64; T[:3,:3].T) + T[:3,3]</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>ndarray, shape (4, 4)</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If input arrays don’t have shape (N, 3) or (M, 3).</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>Basic usage:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">einit</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_ellipsoid</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">src</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">dst</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">80</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>  <span class="c1"># Different size OK</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">T</span> <span class="o">=</span> <span class="n">register_ellipsoid</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">T</span><span class="o">.</span><span class="n">shape</span>
+<span class="go">(4, 4)</span>
+</pre></div>
+</div>
+<p>With custom parameters:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">T</span> <span class="o">=</span> <span class="n">register_ellipsoid</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">max_correspondence_distance</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">min_inlier_fraction</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">leafsize</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">positive_only</span><span class="o">=</span><span class="kc">True</span>
+<span class="gp">... </span><span class="p">)</span>
+</pre></div>
+</div>
+<p class="rubric">Notes</p>
+<p>The algorithm is permutation-invariant: point ordering in the input arrays
+does not affect the result. It handles partial overlaps, noise, and outliers
+through KD-tree correspondence recovery and distance-based filtering.</p>
+<p>Time complexity is O(N + M log M) where N and M are the number of points
+in the source and destination clouds respectively.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="einit.einit.barycentered">
+<span class="sig-prename descclassname"><span class="pre">einit.einit.</span></span><span class="sig-name descname"><span class="pre">barycentered</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">points</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/einit/einit.html#barycentered"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#einit.einit.barycentered" title="Link to this definition"></a></dt>
+<dd><p>Center point cloud around barycenter (N×3 format)</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="algorithm.html" class="btn btn-neutral float-left" title="Algorithm Details" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="examples.html" class="btn btn-neutral float-right" title="Examples" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Alexander Kolpakov (UATX), Michael Werman (HUJI), Judah Levin (UATX).</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

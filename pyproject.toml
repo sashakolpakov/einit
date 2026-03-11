@@ -12,7 +12,7 @@ license = {text = "MIT"}
 authors = [
     {name = "Alexander Kolpakov", email = "akolpakov@uaustin.org"},
     {name = "Michael Werman", email = "werman@cs.huji.ac.il"},
-    {name = "Judah Levin", email = "judah.levin@utexas.edu"},
+    {name = "Judah Levin", email = "jlevin@student.uaustin.org"},
 ]
 maintainers = [
     {name = "Alexander Kolpakov", email = "akolpakov@uaustin.org"},

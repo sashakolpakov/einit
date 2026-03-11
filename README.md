@@ -130,6 +130,21 @@ The algorithm works by:
 
 KD-tree correspondence recovery makes the algorithm robust to point cloud permutations, partial overlaps, and outliers without assuming that points at the same array indices correspond to each other.
 
+Two candidate scoring strategies are available via `params["scoring"]`:
+
+- **`"hard"`** (default) — lexicographic: maximise inlier count, then minimise RMSE among ties. Fast and reliable at full or near-full overlap.
+- **`"soft"`** — Gaussian kernel score `∑ exp(−dᵢ²/2σ²)`. Every point contributes continuously; no binary inlier/outlier cut. Degrades more gracefully when the destination cloud is a sparse subsample.
+
+| dst ratio | hard | soft |
+|-----------|------|------|
+| 100%      | 100% | 100% |
+| 80%       |  92% | 100% |
+| 60%       |  80% | 100% |
+| 50%       |  78% |  99% |
+| 40%       |  75% |  92% |
+| 30%       |  57% |  78% |
+| 20%       |  44% |  72% |
+
 When per-point features are supplied (`src_features`, `dst_features`, `feature_weight > 0`), the spatial covariance is augmented by a spatial-feature cross-covariance term:
 
 ```

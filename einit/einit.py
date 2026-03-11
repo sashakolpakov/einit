@@ -12,7 +12,17 @@ Provides register_ellipsoid(src, dst) that:
 import numpy as np
 from scipy.spatial import cKDTree
 
-__all__ = ["register_ellipsoid", "barycentered"]
+__all__ = ["register_ellipsoid", "barycentered", "DEFAULT_PARAMS"]
+
+DEFAULT_PARAMS = {
+    "max_correspondence_distance": None,  # auto: 3× median NN spacing in dst
+    "min_inlier_fraction": 0.5,           # fraction of src points that must find
+                                          # a neighbour within the distance threshold
+    "leafsize": 16,                       # KD-tree leaf size
+    "positive_only": False,               # restrict to proper rotations (det +1)
+    "scoring": "hard",                    # "hard": lexicographic inlier-count then
+                                          #   RMSE; "soft": Gaussian kernel score
+}
 
 
 def barycentered(points):
@@ -24,8 +34,7 @@ def barycentered(points):
 def register_ellipsoid(src_points, dst_points,
                        src_features=None, dst_features=None,
                        feature_weight=0.0,
-                       max_correspondence_distance=None,
-                       min_inlier_fraction=0.5, leafsize=16, positive_only=False):
+                       params=None):
     """
     Compute initial transformation between 3D point clouds using ellipsoid analysis.
 
@@ -71,26 +80,35 @@ def register_ellipsoid(src_points, dst_points,
         Features are normalised to unit standard deviation (per column, estimated
         from dst_features) before scaling, so feature_weight is dimensionless and
         comparable across datasets.
-    max_correspondence_distance : float, optional
-        Maximum distance for valid point correspondences. Points farther than
-        this distance from their nearest neighbors are considered outliers.
-        If None (default), automatically estimated as 3× the median nearest-
-        neighbor distance within the destination point cloud.
-        Always interpreted in spatial (coordinate) units, even when features
-        are used.
-    min_inlier_fraction : float, default 0.5
-        Minimum fraction of source points that must have valid correspondences
-        within max_correspondence_distance. Transformations with fewer inliers
-        are rejected. Must be between 0 and 1.
-    leafsize : int, default 16
-        KD-tree leaf size parameter. Affects search performance vs memory usage.
-        Smaller values may improve accuracy for small point clouds but increase
-        build time. Typical range: 8-32.
-    positive_only : bool, default False
-        If True, only search proper rotations (determinant +1) by considering
-        only sign combinations with an even number of negative values. This
-        prevents reflections and ensures chirality preservation. Recommended
-        when point distributions are spatially biased (e.g., bounding box overlap).
+    params : dict, optional
+        Algorithm control parameters.  Any subset of keys may be supplied;
+        missing keys fall back to ``DEFAULT_PARAMS``.  Keys:
+
+        ``max_correspondence_distance`` : float or None (default None)
+            Maximum spatial distance for a valid correspondence.  If None,
+            auto-estimated as 3× the median nearest-neighbour spacing inside
+            the destination cloud.  Always in coordinate units.
+        ``min_inlier_fraction`` : float (default 0.5)
+            Minimum fraction of src points that must find a neighbour within
+            the distance threshold.  Candidates below this fraction are
+            rejected outright.
+        ``leafsize`` : int (default 16)
+            KD-tree leaf size.  Typical range 8–32.
+        ``positive_only`` : bool (default False)
+            If True, restrict search to proper rotations (det +1), preventing
+            reflections.  Recommended when point distributions are spatially
+            biased (e.g. bounding-box overlap).
+        ``scoring`` : ``"hard"`` or ``"soft"`` (default ``"hard"``)
+            Candidate ranking strategy.
+
+            ``"hard"`` – lexicographic: maximise inlier count first, then
+            minimise sum-of-squared-distances among ties.  Fast and exact for
+            full-overlap clouds.
+
+            ``"soft"`` – Gaussian kernel score
+            ``sum_i exp(−d_i² / 2σ²)`` where σ = ``max_correspondence_distance``.
+            Every src point contributes continuously; there is no binary
+            inlier/outlier cut.  More robust when dst is a sparse subsample.
 
     Returns
     -------
@@ -120,11 +138,15 @@ def register_ellipsoid(src_points, dst_points,
 
     >>> T = register_ellipsoid(
     ...     src, dst,
-    ...     max_correspondence_distance=0.1,
-    ...     min_inlier_fraction=0.7,
-    ...     leafsize=8,
-    ...     positive_only=True
+    ...     params={"max_correspondence_distance": 0.1,
+    ...             "min_inlier_fraction": 0.7,
+    ...             "leafsize": 8,
+    ...             "positive_only": True}
     ... )
+
+    With soft scoring (more robust to sparse/subsampled destination clouds):
+
+    >>> T = register_ellipsoid(src, dst, params={"scoring": "soft"})
 
     With per-point features (e.g. LiDAR intensity or RGB colour):
 
@@ -150,6 +172,15 @@ def register_ellipsoid(src_points, dst_points,
         raise ValueError("src_points must be (N,3) array")
     if dst_points.ndim != 2 or dst_points.shape[1] != 3:
         raise ValueError("dst_points must be (N,3) array")
+
+    p = {**DEFAULT_PARAMS, **(params or {})}
+    max_correspondence_distance = p["max_correspondence_distance"]
+    min_inlier_fraction         = p["min_inlier_fraction"]
+    leafsize                    = p["leafsize"]
+    positive_only               = p["positive_only"]
+    scoring                     = p["scoring"]
+    if scoring not in ("hard", "soft"):
+        raise ValueError("params['scoring'] must be 'hard' or 'soft'")
 
     # ------------------------------------------------------------------
     # Validate and prepare optional per-point features
@@ -284,11 +315,9 @@ def register_ellipsoid(src_points, dst_points,
         kdtree = cKDTree(Q_centered, leafsize=leafsize)
 
     # Search discrete isometries for best alignment
-    best_error = np.inf
+    best_score = -np.inf    # unified scalar for both scoring modes
     best_transform = U0
-    best_inlier_count = 0
 
-    # Choose sign combinations based on positive_only parameter
     if positive_only:
         base_det = np.linalg.det(Uq @ Up.T)
         if base_det > 0:
@@ -316,22 +345,32 @@ def register_ellipsoid(src_points, dst_points,
         else:
             distances, _ = kdtree.query(P_transformed)
 
-        # Filter correspondences by spatial distance threshold
-        valid_mask = distances <= max_correspondence_distance
-        inlier_count = np.sum(valid_mask)
-        inlier_fraction = inlier_count / len(distances)
-
+        # Guard: reject candidates with too few nearby neighbours
+        inlier_fraction = np.mean(distances <= max_correspondence_distance)
         if inlier_fraction < min_inlier_fraction:
             continue
 
-        if inlier_count > 0:
-            error = np.sum(distances[valid_mask] ** 2)
-            is_better = (inlier_count > best_inlier_count or
-                         (inlier_count == best_inlier_count and error < best_error))
-            if is_better:
-                best_error = error
-                best_transform = U
-                best_inlier_count = inlier_count
+        # Score this candidate
+        if scoring == "soft":
+            # Gaussian kernel: every point contributes continuously.
+            # sigma = max_correspondence_distance so the kernel falls to
+            # exp(-0.5) ≈ 0.6 at the hard-threshold radius.
+            sigma = max_correspondence_distance
+            score = float(np.sum(np.exp(-distances ** 2 / (2.0 * sigma ** 2))))
+        else:
+            # Hard (lexicographic): encode as  inlier_count + (1 - normalised_error)
+            # so that inlier count dominates while RMSE breaks ties.
+            valid_mask = distances <= max_correspondence_distance
+            inlier_count = int(np.sum(valid_mask))
+            if inlier_count == 0:
+                continue
+            error = float(np.sum(distances[valid_mask] ** 2))
+            # Normalise error to [0, 1) so it never exceeds one inlier count unit
+            score = inlier_count - error / (error + 1.0)
+
+        if score > best_score:
+            best_score = score
+            best_transform = U
 
     # Pack into 4×4 homogeneous transform
     T = np.eye(4, dtype=best_transform.dtype)

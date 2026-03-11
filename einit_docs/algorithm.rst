@@ -164,34 +164,92 @@ The implementation uses a KD-tree to find nearest neighbor correspondences for e
        # Compute error using valid correspondences only
        error = np.sum(distances[valid_mask]**2)
 
-6. Error Computation and Selection
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+6. Candidate Scoring and Selection
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-For each candidate transformation, the algorithm computes the sum of squared distances between transformed source points and their nearest neighbors in the target cloud:
+Two scoring strategies are available, selected via ``params["scoring"]``.
+
+**Hard scoring** (default, ``"hard"``)
+
+Ranks candidates lexicographically: first by inlier count (src points whose
+nearest neighbour in dst falls within ``max_correspondence_distance``), then
+by sum of squared distances among ties:
 
 .. math::
-   \text{error} = \sum_{i \in \text{valid}} d_i^2
+   \text{score}_{\text{hard}} = \text{inlier\_count} - \frac{\text{error}}{\text{error} + 1}
 
-where :math:`d_i` is the distance from transformed source point :math:`i` to its nearest neighbor in the target cloud, and the sum includes only correspondences within the distance threshold.
+The second term is a normalised tie-breaker that stays below 1, so inlier
+count always dominates.  This works well when dst is dense (full or near-full
+overlap) but degrades when dst is a sparse subsample — missing points reduce
+inlier counts for the *correct* candidate, making discrimination noisy.
 
-The transformation with the minimum error and sufficient inlier count is selected as the optimal initialization.
+**Soft scoring** (``"soft"``)
+
+Replaces the binary inlier/outlier decision with a Gaussian kernel:
+
+.. math::
+   \text{score}_{\text{soft}} = \sum_{i=1}^{N} \exp\!\left(-\frac{d_i^2}{2\sigma^2}\right), \quad \sigma = \text{max\_correspondence\_distance}
+
+Every src point contributes continuously.  A point whose nearest dst
+neighbour is at distance :math:`d \ll \sigma` contributes ≈ 1; at
+:math:`d = \sigma` it contributes :math:`e^{-1/2} \approx 0.6`; far points
+decay smoothly to zero.  There is no hard cutoff, so the score does not
+collapse when dst is sparse.
+
+The ``min_inlier_fraction`` guard is still applied before scoring in both
+modes to reject degenerate candidates outright.
+
+**Observed degradation under dst subsampling** (LiDAR sphere, 100 trials each):
+
+.. code-block:: text
+
+   dst ratio    hard    soft    winner
+     100%       100%    100%    tie
+      80%        92%    100%    soft
+      60%        80%    100%    soft
+      50%        78%     99%    soft
+      40%        75%     92%    soft
+      30%        57%     78%    soft
+      20%        44%     72%    soft
+
+Soft scoring degrades more gracefully: at 50% subsampling hard is at 78%
+while soft stays at 99%, and the gap widens as dst becomes sparser.  At full
+overlap both strategies are equivalent.  Use ``"hard"`` for speed-critical
+full-overlap pipelines; use ``"soft"`` whenever the destination cloud may be
+a partial sample of the scene.
 
 7. Parameter Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The algorithm accepts several parameters for robustness control:
+All algorithm control parameters are passed as a single ``params`` dict.
+Unspecified keys fall back to ``DEFAULT_PARAMS``::
+
+   from einit import DEFAULT_PARAMS   # inspect defaults
+
+**max_correspondence_distance** (default ``None``)
+    Maximum spatial distance for a valid correspondence.  Auto-estimated as
+    3× the median nearest-neighbour spacing inside dst when not supplied.
+    Always in coordinate units.
+
+**min_inlier_fraction** (default ``0.5``)
+    Fraction of src points that must find a neighbour within the distance
+    threshold.  Candidates below this fraction are rejected outright.
+
+**leafsize** (default ``16``)
+    KD-tree leaf size.  Smaller values can improve accuracy for small clouds
+    at the cost of build time.  Typical range: 8–32.
+
+**positive_only** (default ``False``)
+    Restrict search to proper rotations (det +1), preventing reflections.
+    Recommended when point distributions are spatially biased.
+
+**scoring** (default ``"hard"``)
+    Candidate ranking strategy: ``"hard"`` (lexicographic inlier-count then
+    RMSE) or ``"soft"`` (Gaussian kernel, see above).
 
 **src_features / dst_features**: Optional per-point feature arrays (shape N×k and M×k respectively). 1-D arrays are accepted and treated as (N, 1). Both must be provided together. Typical features: RGB colour, LiDAR intensity, surface normals.
 
 **feature_weight**: Controls how strongly features influence the alignment (default 0.0 = geometry only). Typical useful range: 0.1–1.0. Setting this to 0.0 gives identical results to passing no features.
-
-**max_correspondence_distance**: Maximum distance for valid point correspondences. If not specified, the algorithm estimates this as 3 times the median nearest-neighbor distance within the target cloud. Always interpreted in spatial (coordinate) units even when features are active.
-
-**min_inlier_fraction**: Minimum fraction of points that must have valid correspondences (default 0.5). Transformations with insufficient inliers are rejected.
-
-**leafsize**: KD-tree leaf size parameter affecting search performance (default 16). Smaller values may improve accuracy for small point clouds at the cost of build time.
-
-**positive_only**: When True, restricts the search to only proper rotations (determinant +1) by selecting sign combinations that preserve chirality (default False).
 
 8. Homogeneous Transformation Matrix
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

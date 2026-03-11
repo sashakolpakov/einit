@@ -394,7 +394,63 @@ def test_colored_cube(n_trials=100, feature_weight=1.0):
 
 
 # ---------------------------------------------------------------------------
-# Benchmark 4: Feature weight sweep
+# Benchmark 4: Soft vs hard scoring under subsampling
+# ---------------------------------------------------------------------------
+
+def test_soft_vs_hard_scoring_subsampling(n_trials=100):
+    """
+    A/B test: hard vs soft scoring across dst subsampling ratios 100%→20%.
+
+    A random rigid transform is applied to a LiDAR sphere; dst is drawn as
+    an independent random subsample at each ratio.  Hard scoring relies on
+    inlier count, which collapses when dst is sparse.  Soft scoring
+    accumulates a continuous Gaussian contribution from every src point and
+    is expected to degrade more gracefully.
+
+    Prints a ratio × scoring table and asserts soft is not worse than hard
+    at any ratio (within a 5% tolerance).
+    """
+    rng = np.random.default_rng(17)
+    src_xyz, _ = make_lidar_sphere(2000, rng)
+    ratios = [1.0, 0.8, 0.6, 0.5, 0.4, 0.3, 0.2]
+
+    print("\nA/B test — hard vs soft scoring across dst subsampling ratios")
+    print(f"  {'ratio':>6}  {'hard':>8}  {'soft':>8}  {'winner':>8}")
+
+    results = {}
+    for ratio in ratios:
+        res = {}
+        for scoring in ("hard", "soft"):
+            successes = []
+            for _ in range(n_trials):
+                T_true = random_rigid_transform(translation_range=0.5)
+                dst_full = apply_transform(src_xyz, T_true)
+                dst_full = dst_full + rng.normal(0, 0.01, dst_full.shape)
+
+                n_dst = max(10, int(ratio * len(dst_full)))
+                di = rng.choice(len(dst_full), n_dst, replace=False)
+                dst_xyz = dst_full[di]
+
+                T = register_ellipsoid(src_xyz, dst_xyz,
+                                       params={"scoring": scoring})
+                successes.append(nn_rmse(src_xyz, dst_full, T) < RMSE_THRESHOLD)
+
+            res[scoring] = float(np.mean(successes))
+        results[ratio] = res
+
+        winner = ("soft" if res["soft"] > res["hard"] + 0.01
+                  else "hard" if res["hard"] > res["soft"] + 0.01
+                  else "tie")
+        print(f"  {ratio:>6.0%}  {res['hard']:>8.0%}  {res['soft']:>8.0%}  {winner:>8}")
+
+    for ratio, res in results.items():
+        assert res["soft"] >= res["hard"] - 0.05, (
+            f"Soft scoring worse than hard at ratio={ratio:.0%}: "
+            f"soft {res['soft']:.0%} vs hard {res['hard']:.0%}")
+
+
+# ---------------------------------------------------------------------------
+# Benchmark 5: Feature weight sweep
 # ---------------------------------------------------------------------------
 
 def test_feature_weight_sweep(n_trials=40):

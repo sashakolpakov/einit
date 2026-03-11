@@ -68,9 +68,11 @@ T = register_ellipsoid(
 # With per-point features (e.g. RGB colour or LiDAR intensity)
 # Features break geometric degeneracy for symmetric shapes (spheres, cubes)
 src_rgb = np.random.rand(1000, 3)   # RGB colour per point
-dst_rgb = np.random.rand(1000, 3)
+perm = np.random.permutation(1000)
+dst_points_shuf = dst_points[perm]  # shuffle destination cloud
+dst_rgb = src_rgb[perm]             # carry the same colours along
 T = register_ellipsoid(
-    src_points, dst_points,
+    src_points, dst_points_shuf,
     src_features=src_rgb,
     dst_features=dst_rgb,
     feature_weight=1.0               # 0.0 = geometry only; typical range 0.1–1.0

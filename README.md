@@ -36,9 +36,10 @@
 
 - **Fast**: < 1ms for 1000 points
 - **Accurate**: Often achieves excellent alignment without iterative refinement
-- **OpenCV compatible**: Returns standard 4×4 transformation matrices  
+- **OpenCV compatible**: Returns standard 4×4 transformation matrices
 - **Robust**: Handles noise, partial overlap, and permuted point clouds
 - **Permutation invariant**: Results are identical regardless of point ordering
+- **Feature-augmented**: Optional per-point features (RGB, intensity, normals) break geometric degeneracy for symmetric shapes
 - **Configurable**: Adjustable parameters for different use cases
 - **Simple API**: One function call to get results
 
@@ -60,8 +61,19 @@ print(T)  # 4x4 homogeneous transformation matrix
 T = register_ellipsoid(
     src_points, dst_points,
     max_correspondence_distance=0.1,  # Maximum distance for valid correspondences
-    min_inlier_fraction=0.7,          # Require 70% valid correspondences  
+    min_inlier_fraction=0.7,          # Require 70% valid correspondences
     leafsize=8                        # Smaller KD-tree leaf size
+)
+
+# With per-point features (e.g. RGB colour or LiDAR intensity)
+# Features break geometric degeneracy for symmetric shapes (spheres, cubes)
+src_rgb = np.random.rand(1000, 3)   # RGB colour per point
+dst_rgb = np.random.rand(1000, 3)
+T = register_ellipsoid(
+    src_points, dst_points,
+    src_features=src_rgb,
+    dst_features=dst_rgb,
+    feature_weight=1.0               # 0.0 = geometry only; typical range 0.1–1.0
 )
 ```
 
@@ -109,12 +121,20 @@ Real-world performance on test datasets:
 The algorithm works by:
 
 1. **Centering** point clouds at their centroids
-2. **Computing** ellipsoids of inertia via eigendecomposition  
+2. **Computing** ellipsoids of inertia via eigendecomposition (optionally augmented with per-point features)
 3. **Searching** through 8 reflection combinations using KD-tree correspondence recovery
 4. **Filtering** correspondences by distance and inlier fraction
 5. **Returning** a 4×4 transformation matrix
 
 KD-tree correspondence recovery makes the algorithm robust to point cloud permutations, partial overlaps, and outliers without assuming that points at the same array indices correspond to each other.
+
+When per-point features are supplied (`src_features`, `dst_features`, `feature_weight > 0`), the spatial covariance is augmented by a spatial-feature cross-covariance term:
+
+```
+E_aug = P^T P  +  feature_weight * trace_ratio * (P^T F)(P^T F)^T
+```
+
+This biases the principal axes toward directions where features vary most, breaking eigenvalue degeneracy for symmetric shapes (spheres, cubes, cylinders). The KD-tree step also runs in feature-augmented space so that feature similarity guides nearest-neighbour selection. Features are normalised to keep `feature_weight` dimensionless and dataset-independent.
 
 ## OpenCV Integration
 
@@ -166,25 +186,32 @@ python einit_examples/bbox_overlap_test.py
 ```
 Evaluates performance on the Stanford bunny with geometric bounding box constraints.
 
-> **Note**: Unlike randomized overlaps, this is a known failure mode of the algorithm. Low success rate is expected. 
+> **Note**: Unlike randomized overlaps, this is a known failure mode of the algorithm. Low success rate is expected.
 
+**Feature Matching Diagnostic:**
+```bash
+python einit_examples/cube_feature_matching.py
+```
+Four-panel diagnostic visualisation showing how RGB face colours break the cube's 48-fold geometric symmetry. Produces eigenvalue spectra, per-candidate RMSE/inlier plots, and side-by-side alignment results comparing geometry-only vs feature-augmented registration.
 
 ### Running Tests
+
+The `einit_tests/` directory contains comprehensive test suites validating core functionality:
 
 ```bash
 # All tests
 pytest einit_tests/ -v
 
-# Core algorithm tests  
-pytest einit_tests/test_einit.py -v
-
-# Stanford bunny integration test
-pytest einit_tests/test_integration.py -v
+# Specific test categories
+pytest einit_tests/test_einit.py -v              # Core algorithm tests
+pytest einit_tests/test_integration.py -v        # Integration and robustness tests
+pytest einit_tests/test_features.py -v           # Feature-augmented benchmarks
 ```
 
 **Test Coverage:**
-- **Core Tests**: Basic functionality, synthetic shapes (spheres, cube surfaces), and Stanford bunny validation
-- **Integration Test**: Real-world Stanford bunny PLY dataset with partial overlap and noise
+- **Core Algorithm Tests** (`test_einit.py`): Basic functionality, permutation invariance, noise robustness, and Stanford bunny dataset validation
+- **Integration Tests** (`test_integration.py`): End-to-end pipeline testing with real-world scenarios
+- **Feature Tests** (`test_features.py`): Three real-world feature scenarios (Stanford bunny with LiDAR intensity, hemisphere-flip sphere, coloured cube), a feature-weight sweep, and API-level validation tests
 
 ## Documentation
 

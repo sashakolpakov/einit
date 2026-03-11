@@ -1,0 +1,24 @@
+Metadata-Version: 2.1
+Name: einit
+Version: 0.1.0
+Summary: Ellipsoid ICP initialization for OpenCV-compatible pipelines
+Author: Alexander Kolpakov (UATX), Michael Werman (HUJI), Judah Levin (UATX)
+Requires-Python: >=3.6
+License-File: LICENSE
+Requires-Dist: numpy>=1.15
+Requires-Dist: scipy>=1.0
+Provides-Extra: opencv
+Requires-Dist: opencv-python-headless>=3.4; extra == "opencv"
+Provides-Extra: test
+Requires-Dist: pytest>=6.0; extra == "test"
+Requires-Dist: opencv-python-headless>=3.4; extra == "test"
+Requires-Dist: matplotlib>=3.0; extra == "test"
+Provides-Extra: docs
+Requires-Dist: sphinx>=4.0; extra == "docs"
+Requires-Dist: sphinx_rtd_theme>=1.0; extra == "docs"
+Provides-Extra: all
+Requires-Dist: opencv-python-headless>=3.4; extra == "all"
+Requires-Dist: pytest>=6.0; extra == "all"
+Requires-Dist: matplotlib>=3.0; extra == "all"
+Requires-Dist: sphinx>=4.0; extra == "all"
+Requires-Dist: sphinx_rtd_theme>=1.0; extra == "all"

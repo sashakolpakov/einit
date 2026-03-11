@@ -1,2 +1,0 @@
-einit
-einit_tests

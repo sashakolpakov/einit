@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=45", "wheel"]
+requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -68,5 +68,9 @@ Documentation = "https://sashakolpakov.github.io/einit/"
 Repository = "https://github.com/sashakolpakov/einit"
 Issues = "https://github.com/sashakolpakov/einit/issues"
 
-[tool.setuptools]
-packages = ["einit"]
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["einit*"]
+
+[tool.setuptools.package-data]
+einit = ["py.typed"]

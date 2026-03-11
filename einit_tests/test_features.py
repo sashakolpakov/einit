@@ -311,6 +311,8 @@ def test_lidar_sphere_hemisphere_flip(n_trials=100, feature_weight=0.5):
         dst_int = src_int.copy()
         dst_xyz = dst_xyz + rng.normal(0, 0.01, dst_xyz.shape)
         dst_int = dst_int + rng.normal(0, 0.02, dst_int.shape)
+        perm = rng.permutation(len(dst_xyz))
+        dst_xyz, dst_int = dst_xyz[perm], dst_int[perm]
 
         T_geo  = register_ellipsoid(src_xyz, dst_xyz)
         T_feat = register_ellipsoid(src_xyz, dst_xyz,
@@ -365,6 +367,8 @@ def test_colored_cube(n_trials=100, feature_weight=1.0):
         dst_xyz = apply_transform(src_xyz, T_true)
         dst_rgb = src_rgb.copy()   # colour is a surface property
         dst_xyz = dst_xyz + rng.normal(0, 0.02, dst_xyz.shape)
+        perm = rng.permutation(len(dst_xyz))
+        dst_xyz, dst_rgb = dst_xyz[perm], dst_rgb[perm]
 
         T_geo  = register_ellipsoid(src_xyz, dst_xyz)
         T_feat = register_ellipsoid(src_xyz, dst_xyz,
@@ -426,6 +430,8 @@ def test_feature_weight_sweep(n_trials=40):
             dst_xyz = apply_transform(src_xyz, T_true)
             dst_int = src_int + rng.normal(0, 0.02, src_int.shape)
             dst_xyz = dst_xyz + rng.normal(0, 0.01, dst_xyz.shape)
+            perm = rng.permutation(len(dst_xyz))
+            dst_xyz, dst_int = dst_xyz[perm], dst_int[perm]
 
             if beta == 0.0:
                 T = register_ellipsoid(src_xyz, dst_xyz)

@@ -3,7 +3,7 @@ import pytest
 import urllib.request
 import tarfile
 import io
-from einit import ellipsoid_init_icp
+from einit import register_ellipsoid
 
 
 def apply_transform(pts, T):
@@ -78,7 +78,7 @@ def test_basic_functionality():
     """Test basic functionality with random data."""
     src = np.random.randn(100, 3)
     dst = np.random.randn(100, 3)
-    T = ellipsoid_init_icp(src, dst)
+    T = register_ellipsoid(src, dst)
     assert T.shape == (4, 4)
     assert np.allclose(T[3, :], [0, 0, 0, 1])
 
@@ -87,7 +87,7 @@ def test_identity_transform():
     """Test with identical point clouds."""
     src = np.random.randn(50, 3)
     dst = src.copy()
-    T = ellipsoid_init_icp(src, dst)
+    T = register_ellipsoid(src, dst)
     np.testing.assert_allclose(T, np.eye(4), atol=1e-10)
 
 
@@ -121,7 +121,7 @@ def test_synthetic_shapes_statistical(noise_std=0.02, overlap_fraction=0.8, n_po
         src_o = src_o[:min_points]
         dst_o = dst_o[:min_points]
         
-        T_recovered = ellipsoid_init_icp(src_o, dst_o)
+        T_recovered = register_ellipsoid(src_o, dst_o)
         
         transform_error = np.linalg.norm(T_recovered - T_true, ord='fro')
         
@@ -166,7 +166,7 @@ def test_synthetic_shapes_statistical(noise_std=0.02, overlap_fraction=0.8, n_po
         src_o = src_o[:min_points]
         dst_o = dst_o[:min_points]
         
-        T_recovered = ellipsoid_init_icp(src_o, dst_o)
+        T_recovered = register_ellipsoid(src_o, dst_o)
         
         transform_error = np.linalg.norm(T_recovered - T_true, ord='fro')
         
@@ -218,7 +218,7 @@ def test_bunny_cloud_statistical(noise_std=0.02, overlap_fraction=0.8, n_points=
         src_o = src_o[:min_points]
         dst_o = dst_o[:min_points]
         
-        T_recovered = ellipsoid_init_icp(src_o, dst_o)
+        T_recovered = register_ellipsoid(src_o, dst_o)
         
         # Compute errors
         transform_error = np.linalg.norm(T_recovered - T_true, ord='fro')

@@ -12,7 +12,7 @@ from scipy.spatial import cKDTree
 # Add the parent directory to path to import einit
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from einit import ellipsoid_init_icp
+from einit import register_ellipsoid
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__)), 'tests'))
 from test_einit import download_stanford_bunny, apply_transform, random_rigid_transform
 
@@ -179,7 +179,7 @@ def bbox_overlap_analysis(noise_std=0.02, overlap_fraction=0.8, n_points=3000, s
         dst_o_permuted = dst_o[perm_idx]
         
         # Run einit with KD-tree (should handle permutations)
-        T_recovered = ellipsoid_init_icp(src_o, dst_o_permuted, positive_only=False)
+        T_recovered = register_ellipsoid(src_o, dst_o_permuted, positive_only=False)
         
         # Compute errors - use full clouds for clean evaluation
         transform_error = np.linalg.norm(T_recovered - T_true, ord='fro')

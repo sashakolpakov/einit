@@ -18,6 +18,7 @@ Features
 
 - **Fast Initialization**: Compute initial transformations in milliseconds
 - **Robust Algorithm**: Handles various point cloud shapes (spheres, ellipsoids, general shapes)
+- **Feature Augmentation**: Optional per-point features (RGB, LiDAR intensity, normals) break geometric degeneracy for symmetric shapes
 - **OpenCV Integration**: Returns standard 4×4 homogeneous transformation matrices
 - **Noise Tolerance**: Maintains performance even with significant noise
 - **Partial Overlap**: Works with incomplete point cloud correspondences
@@ -28,17 +29,27 @@ Quick Start
 .. code-block:: python
 
    import numpy as np
-   from einit import ellipsoid_init_icp
+   from einit import register_ellipsoid
 
    # Create source and destination point clouds
    src_points = np.random.randn(100, 3)
    dst_points = src_points @ R + t  # Apply some transformation
 
-   # Compute initial transformation
-   T_init = ellipsoid_init_icp(src_points, dst_points)
+   # Compute initial transformation (geometry only)
+   T_init = register_ellipsoid(src_points, dst_points)
 
    # T_init is a 4×4 homogeneous transformation matrix
    # Compatible with OpenCV and other computer vision libraries
+
+   # With per-point features to resolve geometric symmetry
+   src_rgb = np.random.rand(100, 3)   # e.g. RGB colour
+   dst_rgb = np.random.rand(100, 3)
+   T_feat = register_ellipsoid(
+       src_points, dst_points,
+       src_features=src_rgb,
+       dst_features=dst_rgb,
+       feature_weight=1.0,
+   )
 
 Installation
 ------------
@@ -88,7 +99,7 @@ Algorithm Overview
 The ellipsoid initialization algorithm works by:
 
 1. **Centering**: Both point clouds are centered at their respective centroids
-2. **Ellipsoids of Inertia**: Computes ellipsoid matrices and their eigendecompositions
+2. **Ellipsoids of Inertia**: Computes ellipsoid matrices and their eigendecompositions (optionally augmented with per-point features)
 3. **Axis Alignment**: Searches through all 8 possible axis orientations (±1 reflections)
 4. **Optimization**: Selects the transformation that minimizes alignment error
 5. **Output**: Returns a 4×4 homogeneous transformation matrix
@@ -107,10 +118,19 @@ Given source points :math:`P = \{p_1, p_2, \ldots, p_n\}` and destination points
    .. math::
       P_c = P - \bar{p}, \quad Q_c = Q - \bar{q}
 
-2. Computes covariance matrices:
-   
+2. Computes covariance matrices (geometry-only):
+
    .. math::
       E_P = P_c^T P_c, \quad E_Q = Q_c^T Q_c
+
+   Or, when per-point features :math:`F` are provided with weight :math:`\beta`:
+
+   .. math::
+      E_P^{\text{aug}} = P_c^T P_c + \beta \cdot \frac{\text{tr}(E_P)}{\text{tr}(E_{ff})} \cdot (P_c^T F)(P_c^T F)^T
+
+   where :math:`E_{ff} = (P_c^T F)(P_c^T F)^T`.  The cross-covariance term biases
+   the principal axes toward spatial directions where features vary most, breaking
+   eigenvalue degeneracy for symmetric shapes.
 
 3. Performs eigendecomposition:
    

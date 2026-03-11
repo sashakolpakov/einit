@@ -61,8 +61,11 @@ In the implementation, we write:
 
 .. code-block:: python
 
-   Ep = src_c.T @ src_c  # 3×3 covariance matrix for source
-   Eq = dst_c.T @ dst_c  # 3×3 covariance matrix for destination
+   Ep = P_centered.T @ P_centered  # 3×3 covariance matrix for source
+   Eq = Q_centered.T @ Q_centered  # 3×3 covariance matrix for destination
+
+When per-point features are provided, the covariance is augmented before
+eigendecomposition (see `Feature Augmentation`_ below).
 
 4. Eigendecomposition
 ~~~~~~~~~~~~~~~~~~~~~
@@ -80,6 +83,38 @@ where :math:`U_P, U_Q` are orthogonal matrices containing the eigenvectors (prin
    eigq, Uq = np.linalg.eigh(Eq)  # eigenvalues and eigenvectors for destination
 
 The ``numpy.linalg.eigh`` function is used because the covariance matrices are symmetric and positive semi-definite.
+
+4b. Feature Augmentation
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+When ``src_features``, ``dst_features``, and ``feature_weight > 0`` are supplied,
+the spatial covariance is augmented before eigendecomposition:
+
+.. math::
+   E_P^{\text{aug}} = P_c^T P_c \;+\; \beta \cdot \frac{\text{tr}(E_P)}{\text{tr}(E_{ff})} \cdot E_{xf} E_{xf}^T
+
+where :math:`E_{xf} = P_c^T F_{\text{scaled}}` is the spatial-feature
+cross-covariance (shape 3×k), and :math:`\beta` is ``feature_weight``.
+
+The trace-ratio factor keeps the scale of the feature term commensurate with the
+spatial term regardless of the number of points or the dynamic range of the features,
+so ``feature_weight=1.0`` means "feature term has the same total variance as the
+spatial term".
+
+Two separate normalisations are used for the two algorithmic steps:
+
+* **Covariance step** — global scale (max std across all feature columns). This
+  preserves inter-channel contrast ratios, which is what creates distinct
+  eigenvalues for asymmetrically coloured objects like a cube with differently
+  coloured faces.
+
+* **KD-tree step** — per-column std normalisation, so each feature channel
+  contributes equally to the augmented distance regardless of dynamic range.
+
+Features are estimated from ``dst_features`` (the reference cloud).
+
+The augmented KD-tree is built in the space ``[x, y, z, w·f₁, …, w·fₖ]``; inlier
+filtering and error scoring remain in spatial (coordinate) units only.
 
 5. Reflection Search and Correspondence Recovery
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -143,7 +178,11 @@ The transformation with the minimum error and sufficient inlier count is selecte
 
 The algorithm accepts several parameters for robustness control:
 
-**max_correspondence_distance**: Maximum distance for valid point correspondences. If not specified, the algorithm estimates this as 3 times the median nearest-neighbor distance within the target cloud.
+**src_features / dst_features**: Optional per-point feature arrays (shape N×k and M×k respectively). 1-D arrays are accepted and treated as (N, 1). Both must be provided together. Typical features: RGB colour, LiDAR intensity, surface normals.
+
+**feature_weight**: Controls how strongly features influence the alignment (default 0.0 = geometry only). Typical useful range: 0.1–1.0. Setting this to 0.0 gives identical results to passing no features.
+
+**max_correspondence_distance**: Maximum distance for valid point correspondences. If not specified, the algorithm estimates this as 3 times the median nearest-neighbor distance within the target cloud. Always interpreted in spatial (coordinate) units even when features are active.
 
 **min_inlier_fraction**: Minimum fraction of points that must have valid correspondences (default 0.5). Transformations with insufficient inliers are rejected.
 

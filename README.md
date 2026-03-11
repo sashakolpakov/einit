@@ -16,9 +16,10 @@
 
 - **Fast**: < 1ms for 1000 points
 - **Accurate**: Often achieves excellent alignment without iterative refinement
-- **OpenCV compatible**: Returns standard 4×4 transformation matrices  
+- **OpenCV compatible**: Returns standard 4×4 transformation matrices
 - **Robust**: Handles noise, partial overlap, and permuted point clouds
 - **Permutation invariant**: Results are identical regardless of point ordering
+- **Feature-augmented**: Optional per-point features (RGB, intensity, normals) break geometric degeneracy for symmetric shapes
 - **Configurable**: Adjustable parameters for different use cases
 - **Simple API**: One function call to get results
 
@@ -26,22 +27,33 @@
 
 ```python
 import numpy as np
-from einit import ellipsoid_init_icp
+from einit import register_ellipsoid
 
 # Your point clouds (N x 3 arrays)
 src_points = np.random.randn(1000, 3)
 dst_points = src_points @ R + t  # Apply some transformation
 
 # Get the transformation matrix
-T = ellipsoid_init_icp(src_points, dst_points)
+T = register_ellipsoid(src_points, dst_points)
 print(T)  # 4x4 homogeneous transformation matrix
 
 # With custom parameters for robustness control
-T = ellipsoid_init_icp(
+T = register_ellipsoid(
     src_points, dst_points,
     max_correspondence_distance=0.1,  # Maximum distance for valid correspondences
-    min_inlier_fraction=0.7,          # Require 70% valid correspondences  
+    min_inlier_fraction=0.7,          # Require 70% valid correspondences
     leafsize=8                        # Smaller KD-tree leaf size
+)
+
+# With per-point features (e.g. RGB colour or LiDAR intensity)
+# Features break geometric degeneracy for symmetric shapes (spheres, cubes)
+src_rgb = np.random.rand(1000, 3)   # RGB colour per point
+dst_rgb = np.random.rand(1000, 3)
+T = register_ellipsoid(
+    src_points, dst_points,
+    src_features=src_rgb,
+    dst_features=dst_rgb,
+    feature_weight=1.0               # 0.0 = geometry only; typical range 0.1–1.0
 )
 ```
 
@@ -89,21 +101,29 @@ Real-world performance on test datasets:
 The algorithm works by:
 
 1. **Centering** point clouds at their centroids
-2. **Computing** ellipsoids of inertia via eigendecomposition  
+2. **Computing** ellipsoids of inertia via eigendecomposition (optionally augmented with per-point features)
 3. **Searching** through 8 reflection combinations using KD-tree correspondence recovery
 4. **Filtering** correspondences by distance and inlier fraction
 5. **Returning** a 4×4 transformation matrix
 
 KD-tree correspondence recovery makes the algorithm robust to point cloud permutations, partial overlaps, and outliers without assuming that points at the same array indices correspond to each other.
 
+When per-point features are supplied (`src_features`, `dst_features`, `feature_weight > 0`), the spatial covariance is augmented by a spatial-feature cross-covariance term:
+
+```
+E_aug = P^T P  +  feature_weight * trace_ratio * (P^T F)(P^T F)^T
+```
+
+This biases the principal axes toward directions where features vary most, breaking eigenvalue degeneracy for symmetric shapes (spheres, cubes, cylinders). The KD-tree step also runs in feature-augmented space so that feature similarity guides nearest-neighbour selection. Features are normalised to keep `feature_weight` dimensionless and dataset-independent.
+
 ## OpenCV Integration
 
 ```python
 import cv2
-from einit import ellipsoid_init_icp
+from einit import register_ellipsoid
 
 # Get initial transformation
-T_init = ellipsoid_init_icp(src, dst)
+T_init = register_ellipsoid(src, dst)
 
 # Refine alignment with OpenCV 
 src_aligned = apply_transform(src, T_init)
@@ -117,54 +137,61 @@ retval, T_refined, inliers = cv2.estimateAffine3D(
 
 ### Running Examples
 
-The `examples/` directory contains demonstrations and visualizations:
+The `einit_examples/` directory contains demonstrations and visualizations:
 
 **Interactive Jupyter Notebook:**
 ```bash
-jupyter notebook examples/visual_tests.ipynb
+jupyter notebook einit_examples/visual_tests.ipynb
 ```
 [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](
-  https://colab.research.google.com/github/sashakolpakov/einit/blob/main/examples/visual_tests.ipynb
+  https://colab.research.google.com/github/sashakolpakov/einit/blob/main/einit_examples/visual_tests.ipynb
 )
 Comprehensive visual demonstrations including sphere, cube, and Stanford bunny alignments with performance analysis.
 
 **Permutation Invariance Test:**
 ```bash
-python examples/point_reoder_test.py
+python einit_examples/point_reoder_test.py
 ```
 Demonstrates that einit correctly handles randomly permuted point clouds.
 
 **Partial Overlap Test:**
 ```bash
-python examples/rand_overlap_test.py
+python einit_examples/rand_overlap_test.py
 ```
 Tests algorithm robustness with realistic partial overlap scenarios using Stanford bunny data.
 
 **Bounding Box Overlap Test:**
 ```bash
-python examples/bbox_overlap_test.py
+python einit_examples/bbox_overlap_test.py
 ```
-Evaluates performance with geometric bounding box constraints.
+Evaluates performance on the Stanford bunny with geometric bounding box constraints.
+
+> **Note**: Unlike randomized overlaps, this is a known failure mode of the algorithm. Low success rate is expected.
+
+**Feature Matching Diagnostic:**
+```bash
+python einit_examples/cube_feature_matching.py
+```
+Four-panel diagnostic visualisation showing how RGB face colours break the cube's 48-fold geometric symmetry. Produces eigenvalue spectra, per-candidate RMSE/inlier plots, and side-by-side alignment results comparing geometry-only vs feature-augmented registration.
 
 ### Running Tests
 
-The `tests/` directory contains comprehensive test suites validating core functionality:
+The `einit_tests/` directory contains comprehensive test suites validating core functionality:
 
 ```bash
 # All tests
-pytest tests/ -v
+pytest einit_tests/ -v
 
-# Specific test categories  
-pytest tests/test_einit.py -v              # Core algorithm tests
-pytest tests/test_integration.py -v        # Integration and robustness tests
-
-# Test permutation invariance specifically
-pytest tests/test_einit.py::test_random_permutation_invariance -v
+# Specific test categories
+pytest einit_tests/test_einit.py -v              # Core algorithm tests
+pytest einit_tests/test_integration.py -v        # Integration and robustness tests
+pytest einit_tests/test_features.py -v           # Feature-augmented benchmarks
 ```
 
 **Test Coverage:**
 - **Core Algorithm Tests** (`test_einit.py`): Basic functionality, permutation invariance, noise robustness, and Stanford bunny dataset validation
 - **Integration Tests** (`test_integration.py`): End-to-end pipeline testing with real-world scenarios
+- **Feature Tests** (`test_features.py`): Three real-world feature scenarios (Stanford bunny with LiDAR intensity, hemisphere-flip sphere, coloured cube), a feature-weight sweep, and API-level validation tests
 
 ## Documentation
 

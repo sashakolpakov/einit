@@ -10,7 +10,7 @@ try:
 except ImportError:
     OPENCV_AVAILABLE = False
 
-from einit import ellipsoid_init_icp
+from einit import register_ellipsoid
 try:
     from .test_einit import apply_transform, random_rigid_transform, download_stanford_bunny
 except ImportError:
@@ -43,7 +43,7 @@ def test_sphere_einit_quality():
         dst_partial = dst_noisy[mask]
         
         # Run einit
-        T_recovered = ellipsoid_init_icp(src_partial, dst_partial)
+        T_recovered = register_ellipsoid(src_partial, dst_partial)
         src_aligned = apply_transform(src, T_recovered)
         dst_clean = apply_transform(src, T_true)
         error = np.sqrt(np.mean(np.linalg.norm(src_aligned - dst_clean, axis=1)**2))
@@ -83,7 +83,7 @@ def test_cube_einit_quality():
         dst_partial = dst_noisy[mask]
         
         # Run einit
-        T_recovered = ellipsoid_init_icp(src_partial, dst_partial)
+        T_recovered = register_ellipsoid(src_partial, dst_partial)
         src_aligned = apply_transform(src, T_recovered)
         dst_clean = apply_transform(src, T_true)
         error = np.sqrt(np.mean(np.linalg.norm(src_aligned - dst_clean, axis=1)**2))
@@ -121,7 +121,7 @@ def test_bunny_einit_quality():
         dst_partial = dst_noisy[mask]
         
         # Run einit
-        T_recovered = ellipsoid_init_icp(src_partial, dst_partial)
+        T_recovered = register_ellipsoid(src_partial, dst_partial)
         src_aligned = apply_transform(src, T_recovered)
         dst_clean = apply_transform(src, T_true)
         error = np.sqrt(np.mean(np.linalg.norm(src_aligned - dst_clean, axis=1)**2))
@@ -147,7 +147,7 @@ def test_opencv_compatibility():
     dst = apply_transform(src, T_true)
     
     # Get einit result
-    T_einit = ellipsoid_init_icp(src, dst)
+    T_einit = register_ellipsoid(src, dst)
     
     # Test OpenCV compatibility
     src_f32 = src.astype(np.float32)

@@ -32,10 +32,10 @@ ICP Initialization
 .. code-block:: python
 
    import cv2
-   from einit import ellipsoid_init_icp
+   from einit import register_ellipsoid
 
    # 1. Get initial transformation with einit
-   T_init = ellipsoid_init_icp(src_points, dst_points)
+   T_init = register_ellipsoid(src_points, dst_points)
 
    # 2. Apply initial transformation
    src_aligned = apply_transform(src_points, T_init)
@@ -72,7 +72,7 @@ RANSAC Integration
            dst_sample = dst[indices]
            
            # Get transformation
-           T_candidate = ellipsoid_init_icp(src_sample, dst_sample)
+           T_candidate = register_ellipsoid(src_sample, dst_sample)
            
            # Evaluate on full dataset
            aligned = apply_transform(src, T_candidate)
@@ -105,7 +105,7 @@ Multi-Scale Processing
            src_transformed = apply_transform(src_scale, T_cumulative)
            
            # Compute refinement
-           T_delta = ellipsoid_init_icp(src_transformed, dst_scale)
+           T_delta = register_ellipsoid(src_transformed, dst_scale)
            T_cumulative = T_delta @ T_cumulative
            
        return T_cumulative
@@ -148,7 +148,7 @@ Batch Processing
            dst_clean = preprocess_for_alignment(dst)
            
            # Compute transformation
-           T = ellipsoid_init_icp(src_clean, dst_clean)
+           T = register_ellipsoid(src_clean, dst_clean)
            transformations.append(T)
            
        return transformations
@@ -172,7 +172,7 @@ Robust Error Checking
                raise ValueError("Source and destination must have same shape")
            
            # Compute transformation
-           T = ellipsoid_init_icp(src, dst)
+           T = register_ellipsoid(src, dst)
            
            # Validate result
            if not np.allclose(T[:3, :3] @ T[:3, :3].T, np.eye(3), atol=1e-6):
@@ -210,7 +210,7 @@ Open3D Integration
        dst_points = np.asarray(dst_pcd.points)
        
        # Get initial transformation
-       T_init = ellipsoid_init_icp(src_points, dst_points)
+       T_init = register_ellipsoid(src_points, dst_points)
        
        # Refine with Open3D ICP
        result = o3d.pipelines.registration.registration_icp(
@@ -234,7 +234,7 @@ PCL Integration (via python-pcl)
        dst_points = dst_cloud.to_array()
        
        # Get initialization
-       T_init = ellipsoid_init_icp(src_points, dst_points)
+       T_init = register_ellipsoid(src_points, dst_points)
        
        # Use PCL's ICP with initialization
        icp = src_cloud.make_IterativeClosestPoint()

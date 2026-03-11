@@ -9,7 +9,7 @@ import os
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from einit import ellipsoid_init_icp, barycentered
+from einit import register_ellipsoid, barycentered
 
 def apply_transform(pts, T):
     """Apply 4x4 homogeneous transform to points."""
@@ -53,14 +53,14 @@ def demo_permutation_invariance():
     print(f"Random permutation applied to destination\n")
     
     # Test the algorithm with permuted destination
-    T_recovered = ellipsoid_init_icp(P_centered, Q_permuted_centered)
+    T_recovered = register_ellipsoid(P_centered, Q_permuted_centered)
     
     # Apply recovered transform to ORIGINAL P and compare with ORIGINAL Q (no permutation)
     P_aligned = apply_transform(P_centered, T_recovered)
     error_permuted = np.sqrt(np.mean(np.linalg.norm(P_aligned - Q_clean_centered, axis=1)**2))
     
     # For comparison, test without permutation
-    T_direct = ellipsoid_init_icp(P_centered, Q_clean_centered)
+    T_direct = register_ellipsoid(P_centered, Q_clean_centered)
     P_aligned_direct = apply_transform(P_centered, T_direct)
     error_direct = np.sqrt(np.mean(np.linalg.norm(P_aligned_direct - Q_clean_centered, axis=1)**2))
     

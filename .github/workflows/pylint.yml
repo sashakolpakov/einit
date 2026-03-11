@@ -27,7 +27,7 @@ jobs:
     - name: Lint with pylint
       run: |
         # Run pylint with configuration file
-        pylint einit --rcfile=pylint.rc
+        pylint einit --rcfile=.github/workflows/.pylintrc
 
   test:
     runs-on: ubuntu-latest

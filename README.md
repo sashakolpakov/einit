@@ -1,13 +1,33 @@
-# einit: Fast and Robust ICP Initialization
+<p align="center">
+  <img src="einit_docs/einit.png" alt="einit logo" height="320"/>
+</p>
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.6+](https://img.shields.io/badge/python-3.6+-blue.svg)](https://www.python.org/downloads/)
-[![PyPI](https://img.shields.io/pypi/v/einit.svg)](https://pypi.org/project/einit/)
+<h1 align="center">Fast and Robust ICP Initialization</h1>
 
-<!-- CI status from GitHub Actions -->
-[![CI](https://img.shields.io/github/actions/workflow/status/sashakolpakov/einit/pylint.yml?branch=main&label=CI&logo=github)](https://github.com/sashakolpakov/einit/actions/workflows/pylint.yml) <!-- Docs status from GitHub Actions -->
-[![Docs](https://img.shields.io/github/actions/workflow/status/sashakolpakov/einit/deploy_docs.yml?branch=main&label=Docs&logo=github)](https://github.com/sashakolpakov/einit/actions/workflows/deploy_docs.yml) <!-- Docs health via HTTP ping -->
-[![Docs](https://img.shields.io/website-up-down-green-red/https/sashakolpakov.github.io/einit?label=API%20Documentation)](https://sashakolpakov.github.io/einit/)
+<p align="center">
+  <a href="https://opensource.org/licenses/MIT">
+    <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"/>
+  </a>
+  <a href="https://www.python.org/downloads/">
+    <img src="https://img.shields.io/badge/python-3.6+-blue.svg" alt="Python 3.6+"/>
+  </a>
+  <a href="https://pypi.org/project/einit/">
+    <img src="https://img.shields.io/pypi/v/einit.svg" alt="PyPI"/>
+  </a>
+  <a href="https://pepy.tech/projects/einit">
+    <img src="https://static.pepy.tech/personalized-badge/einit?period=monthly&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=downloads%2Fmonth" alt="PyPI Downloads">
+  </a>
+  <a href="https://github.com/sashakolpakov/einit/actions/workflows/pylint.yml">
+    <img src="https://img.shields.io/github/actions/workflow/status/sashakolpakov/einit/pylint.yml?branch=main&label=CI&logo=github" alt="CI"/>
+  </a>
+  <a href="https://github.com/sashakolpakov/einit/actions/workflows/deploy_docs.yml">
+    <img src="https://img.shields.io/github/actions/workflow/status/sashakolpakov/einit/deploy_docs.yml?branch=main&label=Docs&logo=github" alt="Docs"/>
+  </a>
+  <a href="https://sashakolpakov.github.io/einit/">
+    <img src="https://img.shields.io/website-up-down-green-red/https/sashakolpakov.github.io/einit?label=API%20Documentation" alt="Docs Status"/>
+  </a>
+</p>
+
 
 
 **einit** provides fast and robust initialization for 3D point cloud alignment using ellipsoid analysis. It computes initial transformations by analyzing the ellipsoids of inertia of point clouds and uses KD-tree correspondence recovery for robustness to real-world scenarios.
@@ -90,11 +110,11 @@ Real-world performance on test datasets:
 
 | Dataset | Points | RMSE  | Time             |
 |---------|--------|-------|------------------|
-| Sphere  | 1500   | 0.03  | 0.006 ± 0.002 ms |  
-| Cube    | 3375   | 0.02  | 0.010 ± 0.008 ms |
+| Sphere  | 1500   | 0.035 | 0.006 ± 0.002 ms |  
+| Cube    | 3375   | 0.025 | 0.010 ± 0.008 ms |
 | Bunny   | 992    | 0.02  | 0.047 ± 0.021 ms |
 
-*With 0.01-0.02 standard Gaussian noise and ~ 80% overlap*
+*With 0.01-0.02 standard Gaussian noise and partial overlap*
 
 ## Algorithm
 
@@ -158,7 +178,7 @@ Demonstrates that einit correctly handles randomly permuted point clouds.
 ```bash
 python einit_examples/rand_overlap_test.py
 ```
-Tests algorithm robustness with realistic partial overlap scenarios using Stanford bunny data.
+Tests algorithm robustness with randomized partial overlap scenarios using the Stanford bunny.
 
 **Bounding Box Overlap Test:**
 ```bash
@@ -213,8 +233,25 @@ This work is supported by the Google Cloud Research Award number GCP19980904.
 
 ## Citation
 
-Based on the original paper by Kolpakov and Werman:
+If you use this work, please cite the paper below.
+
+**BibTeX:**
+```bibtex
+@article{kolpakov2023approach,
+  title={An Approach to Robust ICP Initialization},
+  author={Kolpakov, Alexander and Werman, Michael},
+  journal={IEEE Transactions on Pattern Analysis and Machine Intelligence},
+  volume={45},
+  number={10},
+  pages={12685--12691},
+  year={2023},
+  publisher={IEEE},
+  doi={10.1109/TPAMI.2023.3287468},
+  url={https://ieeexplore.ieee.org/document/10155262}
+}
+```
+
+**APA:**
+Kolpakov, A., & Werman, M. (2023). An Approach to Robust ICP Initialization. *IEEE Transactions on Pattern Analysis and Machine Intelligence*, 45(10), 12685-12691. https://doi.org/10.1109/TPAMI.2023.3287468
 
 [![Paper](https://img.shields.io/badge/arXiv-read%20PDF-b31b1b.svg)](https://arxiv.org/abs/2212.05332)
-
-*"An approach to robust ICP initialization"*

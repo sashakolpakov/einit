@@ -8,7 +8,9 @@ __pycache__/
 
 # Distribution / packaging
 .Python
+build/
 develop-eggs/
+dist/
 downloads/
 eggs/
 .eggs/
@@ -17,6 +19,7 @@ lib64/
 parts/
 var/
 share/python-wheels/
+*.egg-info/
 .installed.cfg
 MANIFEST
 
@@ -64,6 +67,7 @@ instance/
 
 # Sphinx documentation
 docs/_build/
+einit_docs/_build/
 
 # PyBuilder
 .pybuilder/
@@ -169,3 +173,17 @@ cython_debug/
 
 # Development and research files
 dev/
+
+# Local development - reiya components
+reiya/
+reiya_*/
+*reiya*.py
+
+# macOS system files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

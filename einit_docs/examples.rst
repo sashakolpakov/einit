@@ -32,175 +32,6 @@ Simple Point Cloud Alignment
    print("Estimated transformation:")
    print(T_init)
 
-Using Per-Point Features
-------------------------
-
-Per-point features help when the geometry alone is ambiguous — symmetric shapes
-like spheres, cubes, or cylinders all have degenerate covariance eigenvalues, so
-the plain algorithm is essentially guessing among the 8 candidate rotations.
-Passing a feature array alongside the coordinates breaks that degeneracy.
-
-**What counts as a feature?**  Any per-point attribute that is a *surface property*
-(i.e. it travels with the point under rigid motion) and varies across the cloud:
-
-- RGB or greyscale colour from an RGBD camera
-- LiDAR reflectance / intensity
-- Surface normals (the outward normal vector at each point)
-- Curvature estimates
-- Any custom descriptor
-
-**Minimal example — 1-D intensity:**
-
-.. code-block:: python
-
-   import numpy as np
-   from einit import register_ellipsoid
-
-   # src_xyz, dst_xyz: (N, 3) and (M, 3) point arrays
-   # src_intensity, dst_intensity: scalar reflectance per point
-
-   # 1-D arrays are accepted directly — no need to reshape to (N, 1)
-   T = register_ellipsoid(
-       src_xyz, dst_xyz,
-       src_features=src_intensity,   # shape (N,) or (N, 1) — both work
-       dst_features=dst_intensity,
-       feature_weight=0.5,
-   )
-
-**Multi-channel example — RGB colour:**
-
-.. code-block:: python
-
-   T = register_ellipsoid(
-       src_xyz, dst_xyz,
-       src_features=src_rgb,         # shape (N, 3), values in [0, 1]
-       dst_features=dst_rgb,
-       feature_weight=1.0,
-   )
-
-**Choosing feature_weight:**
-
-+-------------------+----------------------------------------------------------+
-| ``feature_weight``| Effect                                                   |
-+===================+==========================================================+
-| ``0.0``           | Geometry only — identical to calling without features.   |
-+-------------------+----------------------------------------------------------+
-| ``0.1–0.3``       | Light feature influence; good when geometry is already   |
-|                   | close to correct and you just want to resolve sign flips.|
-+-------------------+----------------------------------------------------------+
-| ``0.5–1.0``       | Strong feature influence; recommended for highly         |
-|                   | symmetric shapes (spheres, cubes).                       |
-+-------------------+----------------------------------------------------------+
-| ``> 1.0``         | Features dominate; only useful if the feature signal is  |
-|                   | much stronger than the geometric signal.                 |
-+-------------------+----------------------------------------------------------+
-
-A quick sweep over ``[0.1, 0.3, 0.5, 1.0]`` on a small validation set is usually
-enough to find a good value.  ``feature_weight=1.0`` is a safe default for RGB
-colour and LiDAR intensity.
-
-**Flexible API patterns:**
-
-.. code-block:: python
-
-   # Pattern 1: always pass features, weight controls their influence
-   def align(src, dst, src_feat=None, dst_feat=None, weight=0.0):
-       return register_ellipsoid(
-           src, dst,
-           src_features=src_feat,
-           dst_features=dst_feat,
-           feature_weight=weight,
-       )
-
-   # Geometry only
-   T = align(src, dst)
-
-   # Feature-augmented (weight=0.0 → identical to geometry-only even if
-   # feature arrays are passed, so this is always safe to call)
-   T = align(src, dst, src_rgb, dst_rgb, weight=1.0)
-
-   # Pattern 2: conditional — only pass features when available
-   kwargs = {}
-   if src_feat is not None:
-       kwargs = dict(src_features=src_feat, dst_features=dst_feat,
-                     feature_weight=0.5)
-   T = register_ellipsoid(src, dst, **kwargs)
-
-**API guarantees:**
-
-- ``src_features`` and ``dst_features`` must *both* be provided or *neither*.
-  Providing only one raises ``ValueError``.
-- The two feature arrays must have the **same number of columns** (feature
-  dimensionality), but can have different numbers of rows (N ≠ M is fine).
-- Setting ``feature_weight=0.0`` gives exactly the same result as omitting
-  features entirely — useful for A/B comparisons.
-- Features are normalised internally; you do not need to pre-scale them.
-
-Feature-Augmented Registration
--------------------------------
-
-Per-point features such as RGB colour or LiDAR intensity can be passed alongside
-the point coordinates to resolve alignment ambiguities that geometry alone cannot
-handle (spheres, cubes, cylinders).
-
-.. code-block:: python
-
-   import numpy as np
-   from einit import register_ellipsoid
-
-   # --- LiDAR intensity example ---
-   # Hemisphere flip: a sphere is geometrically invariant under any rotation.
-   # Intensity (high for sunlit top half, low for shadowed bottom half) makes
-   # the z-axis special, allowing the algorithm to select the correct sign.
-
-   n = 2000
-   rng = np.random.default_rng(0)
-   phi   = rng.uniform(0, np.pi, n)
-   theta = rng.uniform(0, 2 * np.pi, n)
-   src_xyz = np.column_stack([
-       np.sin(phi) * np.cos(theta),
-       np.sin(phi) * np.sin(theta),
-       np.cos(phi),
-   ])
-   src_intensity = np.where(src_xyz[:, 2] > 0, 0.8, 0.2).reshape(-1, 1)
-
-   # Apply a near-180° rotation around z (hemisphere flip)
-   angle = np.pi + rng.uniform(-0.1, 0.1)
-   c, s = np.cos(angle), np.sin(angle)
-   R = np.array([[c, -s, 0], [s, c, 0], [0, 0, 1]])
-   dst_xyz = src_xyz @ R.T + rng.uniform(-0.5, 0.5, 3)
-   dst_intensity = src_intensity.copy()   # intensity is a surface property
-
-   # Geometry-only often fails for a sphere
-   T_geo  = register_ellipsoid(src_xyz, dst_xyz)
-
-   # Feature-augmented resolves the hemisphere ambiguity
-   T_feat = register_ellipsoid(
-       src_xyz, dst_xyz,
-       src_features=src_intensity,
-       dst_features=dst_intensity,
-       feature_weight=0.5,
-   )
-
-   # --- RGB colour example (coloured cube) ---
-   # A cube has 48-fold rotational symmetry; geometry-only succeeds ~2% of the
-   # time.  Six face colours with different per-axis contrast break this.
-
-   from einit_examples.cube_feature_matching import make_colored_cube
-
-   src_xyz, src_rgb = make_colored_cube(grid_n=15)
-   T_true_4x4 = np.eye(4)
-   # (apply a known random rotation/translation to src to get dst ...)
-   dst_xyz = src_xyz.copy()   # placeholder
-   dst_rgb = src_rgb.copy()
-
-   T_feat_cube = register_ellipsoid(
-       src_xyz, dst_xyz,
-       src_features=src_rgb,
-       dst_features=dst_rgb,
-       feature_weight=1.0,
-   )
-
 Integration with OpenCV
 -----------------------
 
@@ -336,7 +167,7 @@ Demonstrates that einit correctly handles randomly permuted point clouds:
 
    python einit_examples/point_reoder_test.py
 
-This script shows that einit's ellipsoid-based approach is robust to point ordering changes in the destination cloud, achieving identical performance whether points are permuted or not.
+This script shows that einit's ellipsoid-based approach is robust to point ordering changes, achieving identical performance whether points are permuted or not.
 
 **Partial Overlap Test**
 
@@ -354,16 +185,6 @@ Evaluates performance with geometric bounding box constraints:
 
    python einit_examples/bbox_overlap_test.py
 
-**Feature Matching Diagnostic**
-
-Four-panel diagnostic visualisation for the coloured-cube scenario.  Shows
-eigenvalue spectra (geometry-only vs feature-augmented), per-candidate RMSE and
-inlier counts for all 8 sign combinations, and side-by-side alignment results:
-
-.. code-block:: bash
-
-   python einit_examples/cube_feature_matching.py
-
 The notebook includes:
 
 - Interactive visualizations of point cloud alignment
@@ -380,16 +201,26 @@ To verify the installation and run comprehensive tests:
 
    # Run all tests
    python -m pytest einit_tests/ -v
-
+   
    # Run specific test categories
    python -m pytest einit_tests/test_einit.py -v              # Core algorithm tests
-   python -m pytest einit_tests/test_integration.py -v        # Integration tests
-   python -m pytest einit_tests/test_features.py -v           # Feature-augmented benchmarks
+   python -m pytest einit_tests/test_integration.py -v        # Stanford bunny integration test
+   
+   # Run individual test functions
+   python -m pytest einit_tests/test_einit.py::test_basic_functionality -v
+   python -m pytest einit_tests/test_einit.py::test_identity_transform -v
+   python -m pytest einit_tests/test_einit.py::test_synthetic_shapes_statistical -v
+   python -m pytest einit_tests/test_einit.py::test_bunny_cloud_statistical -v
 
 The test suite includes:
 
-- **Core algorithm tests** (``test_einit.py``): Basic functionality, identical point clouds, statistical analysis on synthetic shapes (spheres), and Stanford bunny dataset validation with noise and partial overlap
-- **Integration tests** (``test_integration.py``): End-to-end pipeline testing with real-world scenarios
-- **Feature tests** (``test_features.py``): Three real-world feature scenarios — Stanford bunny with LiDAR intensity, hemisphere-flip LiDAR sphere, and 48-fold symmetric coloured cube — plus a feature-weight sweep and API-level validation tests
+- **Core algorithm tests** (``test_einit.py``): Basic functionality, identity transforms, robust statistical analysis on synthetic shapes (spheres and cube surfaces), Stanford bunny dataset validation, noise robustness testing using correlation analysis, and performance scaling verification using log-log regression
+- **Integration tests** (``test_integration.py``): Stanford bunny alignment test using the original PLY dataset with partial overlap, noise, and ICP refinement comparison between OpenCV and Open3D methods
 
-Test results provide detailed statistics including success rates, RMSE distributions, and performance benchmarks for different geometric shapes.
+The tests use advanced statistical validation methods:
+
+- **Noise robustness**: Verifies that RMSE grows approximately linearly with noise level using correlation coefficients (r > 0.7) rather than hard thresholds
+- **Performance scaling**: Uses log-log regression to verify sub-quadratic time complexity (O(n^α) where α < 2.0) across different point cloud sizes
+- **Robust testing**: Uses statistical repetition with configurable failure thresholds to handle inherent randomness in point cloud generation
+
+Test results provide detailed statistics including success rates, RMSE distributions, transform errors, correlation analysis, scaling exponents, and performance timing for different geometric shapes and real-world data.

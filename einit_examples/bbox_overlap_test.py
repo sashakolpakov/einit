@@ -11,9 +11,9 @@ from scipy.spatial import cKDTree
 
 # Add the parent directory to path to import einit
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__)), 'einit_tests'))
 
 from einit import register_ellipsoid
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__)), 'tests'))
 from test_einit import download_stanford_bunny, apply_transform, random_rigid_transform
 
 # Try to import OpenCV for ICP
@@ -24,7 +24,7 @@ except ImportError:
     OPENCV_AVAILABLE = False
 
 
-def opencv_icp_refinement(src, dst, T_init, max_iterations=10):
+def opencv_icp_refinement(src, dst, T_init, max_iterations=50):
     """OpenCV-based ICP refinement using estimateAffine3D."""
     if not OPENCV_AVAILABLE:
         return T_init, [np.inf]
@@ -45,7 +45,7 @@ def opencv_icp_refinement(src, dst, T_init, max_iterations=10):
         max_dist = np.percentile(distances, 80)  # Use best 80% of matches
         valid_mask = distances <= max_dist
         
-        if np.sum(valid_mask) < 10:
+        if np.sum(valid_mask) < 100:
             break
             
         # Create correspondence arrays for OpenCV
@@ -70,8 +70,8 @@ def opencv_icp_refinement(src, dst, T_init, max_iterations=10):
         R_increment = affine_matrix[:3, :3]
         t_increment = affine_matrix[:3, 3]
         
-        # Check if transformation is reasonable
-        if np.linalg.norm(t_increment) > 1.0 or np.linalg.norm(R_increment - np.eye(3)) > 0.5:
+        # Check if transformation is reasonable (more lenient limits)
+        if np.linalg.norm(t_increment) > 5.0 or np.linalg.norm(R_increment - np.eye(3)) > 1.5:
             break
             
         T_increment = np.eye(4)

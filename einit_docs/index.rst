@@ -28,14 +28,14 @@ Quick Start
 .. code-block:: python
 
    import numpy as np
-   from einit import ellipsoid_init_icp
+   from einit import register_ellipsoid
 
    # Create source and destination point clouds
    src_points = np.random.randn(100, 3)
    dst_points = src_points @ R + t  # Apply some transformation
 
    # Compute initial transformation
-   T_init = ellipsoid_init_icp(src_points, dst_points)
+   T_init = register_ellipsoid(src_points, dst_points)
 
    # T_init is a 4×4 homogeneous transformation matrix
    # Compatible with OpenCV and other computer vision libraries

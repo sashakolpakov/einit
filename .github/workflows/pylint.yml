@@ -27,7 +27,7 @@ jobs:
     - name: Lint with pylint
       run: |
         # Run pylint with configuration file
-        pylint einit --rcfile=pylint.rc
+        pylint einit --rcfile=.github/workflows/.pylintrc
 
   test:
     runs-on: ubuntu-latest
@@ -50,5 +50,5 @@ jobs:
     
     - name: Test with pytest
       run: |
-        pytest tests/test_einit.py -v
-        pytest tests/test_integration.py -v
+        pytest einit_tests/test_einit.py -v
+        pytest einit_tests/test_integration.py -v

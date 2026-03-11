@@ -10,7 +10,7 @@ Simple Point Cloud Alignment
 .. code-block:: python
 
    import numpy as np
-   from einit import ellipsoid_init_icp
+   from einit import register_ellipsoid
 
    # Create source points (sphere)
    n = 1000
@@ -28,7 +28,7 @@ Simple Point Cloud Alignment
    dst = src @ R.T + t
 
    # Compute initial transformation
-   T_init = ellipsoid_init_icp(src, dst)
+   T_init = register_ellipsoid(src, dst)
    print("Estimated transformation:")
    print(T_init)
 
@@ -42,7 +42,7 @@ Using with cv2.estimateAffine3D
 
    import cv2
    import numpy as np
-   from einit import ellipsoid_init_icp
+   from einit import register_ellipsoid
 
    def apply_transform(pts, T):
        """Apply 4x4 homogeneous transform to points."""
@@ -63,7 +63,7 @@ Using with cv2.estimateAffine3D
        return init_T
 
    # Use einit for initialization, then refine with OpenCV
-   T_init = ellipsoid_init_icp(src, dst)
+   T_init = register_ellipsoid(src, dst)
    T_final = refine_with_opencv(src, dst, T_init)
 
 Real-World Data
@@ -79,7 +79,7 @@ Working with Noisy Point Clouds
    dst_noisy = dst + np.random.normal(0, noise_std, dst.shape)
 
    # Algorithm handles noise well
-   T_init = ellipsoid_init_icp(src, dst_noisy)
+   T_init = register_ellipsoid(src, dst_noisy)
    aligned = apply_transform(src, T_init)
 
    # Compute alignment quality
@@ -102,7 +102,7 @@ Partial Overlap Scenarios
    dst_partial = dst_noisy[indices]
 
    # Algorithm works with partial data
-   T_init = ellipsoid_init_icp(src_partial, dst_partial)
+   T_init = register_ellipsoid(src_partial, dst_partial)
 
 Visualization
 -------------
@@ -148,7 +148,7 @@ Running Examples and Tests
 Examples Directory
 ~~~~~~~~~~~~~~~~~~
 
-The ``examples/`` directory contains several demonstration scripts and notebooks:
+The ``einit_examples/`` directory contains several demonstration scripts and notebooks:
 
 **Interactive Jupyter Notebook**
 
@@ -157,7 +157,7 @@ Comprehensive visual demonstrations including sphere, cube, and Stanford bunny a
 .. code-block:: bash
 
    # Launch Jupyter and open the notebook
-   jupyter notebook examples/visual_tests.ipynb
+   jupyter notebook einit_examples/visual_tests.ipynb
 
 **Permutation Invariance Test**
 
@@ -165,9 +165,9 @@ Demonstrates that einit correctly handles randomly permuted point clouds:
 
 .. code-block:: bash
 
-   python examples/point_reoder_test.py
+   python einit_examples/point_reoder_test.py
 
-This script shows that einit's ellipsoid-based approach is robust to point ordering changes in the destination cloud, achieving identical performance whether points are permuted or not.
+This script shows that einit's ellipsoid-based approach is robust to point ordering changes, achieving identical performance whether points are permuted or not.
 
 **Partial Overlap Test**
 
@@ -175,7 +175,7 @@ Tests algorithm robustness with realistic partial overlap scenarios using Stanfo
 
 .. code-block:: bash
 
-   python examples/rand_overlap_test.py
+   python einit_examples/rand_overlap_test.py
 
 **Bounding Box Overlap Test**
 
@@ -183,7 +183,7 @@ Evaluates performance with geometric bounding box constraints:
 
 .. code-block:: bash
 
-   python examples/bbox_overlap_test.py
+   python einit_examples/bbox_overlap_test.py
 
 The notebook includes:
 
@@ -200,18 +200,27 @@ To verify the installation and run comprehensive tests:
 .. code-block:: bash
 
    # Run all tests
-   python -m pytest tests/ -v
+   python -m pytest einit_tests/ -v
    
    # Run specific test categories
-   python -m pytest tests/test_einit.py -v              # Core algorithm tests
-   python -m pytest tests/test_integration.py -v        # Integration tests
+   python -m pytest einit_tests/test_einit.py -v              # Core algorithm tests
+   python -m pytest einit_tests/test_integration.py -v        # Stanford bunny integration test
    
-   # Run the new permutation invariance test
-   python -m pytest tests/test_einit.py::test_random_permutation_invariance -v
+   # Run individual test functions
+   python -m pytest einit_tests/test_einit.py::test_basic_functionality -v
+   python -m pytest einit_tests/test_einit.py::test_identity_transform -v
+   python -m pytest einit_tests/test_einit.py::test_synthetic_shapes_statistical -v
+   python -m pytest einit_tests/test_einit.py::test_bunny_cloud_statistical -v
 
 The test suite includes:
 
-- **Core algorithm tests** (``test_einit.py``): Basic functionality, identical point clouds, statistical analysis on synthetic shapes (spheres), and Stanford bunny dataset validation with noise and partial overlap
-- **Integration tests** (``test_integration.py``): End-to-end pipeline testing with real-world scenarios
+- **Core algorithm tests** (``test_einit.py``): Basic functionality, identity transforms, robust statistical analysis on synthetic shapes (spheres and cube surfaces), Stanford bunny dataset validation, noise robustness testing using correlation analysis, and performance scaling verification using log-log regression
+- **Integration tests** (``test_integration.py``): Stanford bunny alignment test using the original PLY dataset with partial overlap, noise, and ICP refinement comparison between OpenCV and Open3D methods
 
-Test results provide detailed statistics including success rates, RMSE distributions, and performance benchmarks for different geometric shapes.
+The tests use advanced statistical validation methods:
+
+- **Noise robustness**: Verifies that RMSE grows approximately linearly with noise level using correlation coefficients (r > 0.7) rather than hard thresholds
+- **Performance scaling**: Uses log-log regression to verify sub-quadratic time complexity (O(n^α) where α < 2.0) across different point cloud sizes
+- **Robust testing**: Uses statistical repetition with configurable failure thresholds to handle inherent randomness in point cloud generation
+
+Test results provide detailed statistics including success rates, RMSE distributions, transform errors, correlation analysis, scaling exponents, and performance timing for different geometric shapes and real-world data.

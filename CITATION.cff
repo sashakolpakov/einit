@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use this work, please cite the paper below."
+preferred-citation:
+  type: article
+  title: "An Approach to Robust ICP Initialization"
+  authors:
+    - family-names: Kolpakov
+      given-names: Alexander
+    - family-names: Werman
+      given-names: Michael
+  journal: "IEEE Transactions on Pattern Analysis and Machine Intelligence"
+  volume: 45
+  issue: 10
+  year: 2023
+  start: 12685
+  end: 12691
+  doi: "10.1109/TPAMI.2023.3287468"
+  url: "https://ieeexplore.ieee.org/document/10155262"
